@@ -1,0 +1,14 @@
+# Ignorar archivos de configuración
+.env
+
+# Ignorar dependencias instaladas
+node_modules/
+
+# Ignorar archivos de compilación
+package-lock.json
+
+# Ignorar logs
+*.log
+
+# Ignorar archivos temporales
+*.tmp
