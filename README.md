@@ -49,7 +49,7 @@ API RESTful construida con **Node.js**, **Express** y **MySQL** para gestionar u
 ## 🔧 Instalación
 
 ```sh
-git clone <repo-url>
+git clone https://github.com/jmarara529/API_RutasGastronomicas
 cd API_RutasGastronomicas
 npm install
 cp .env.example .env
@@ -478,7 +478,3 @@ historial_eliminaciones
 - Todos los endpoints (excepto registro/login) requieren autenticación JWT.
 - Los endpoints de administración requieren el campo `es_admin` en el token.
 - El usuario con ID 1 es protegido y no puede ser modificado/eliminado.
-
----
-
-¿Dudas o sugerencias? ¡Contribuye o abre un issue!
