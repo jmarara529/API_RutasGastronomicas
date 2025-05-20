@@ -1,11 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const authMiddleware = require('../middleware/auth');  // Corrección de importación
-const isAdmin = require('../middleware/isAdmin');  // Corrección de importación
+const authMiddleware = require('../middleware/auth');  // Middleware de autenticación
+const isAdmin = require('../middleware/isAdmin');      // Middleware para verificar admin
 
+// Ruta para obtener el historial de eliminaciones (solo admin)
 router.get('/', authMiddleware, isAdmin, async (req, res) => {
     try {
+        // Consulta el historial y une con el nombre del usuario que ejecutó la eliminación
         const [historial] = await pool.query(`
             SELECT h.*, u.nombre AS ejecutado_por 
             FROM historial_eliminaciones h 

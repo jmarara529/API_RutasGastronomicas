@@ -6,6 +6,7 @@ const crearResena = async (req, res) => {
         const id_usuario = req.user.id;
         const { place_id, calificacion, comentario } = req.body;
 
+        // Validar que la calificación esté entre 1 y 5
         if (!calificacion || calificacion < 1 || calificacion > 5) {
             return res.status(400).json({ msg: 'Calificación debe ser entre 1 y 5' });
         }
@@ -13,10 +14,11 @@ const crearResena = async (req, res) => {
         // Verificar que el lugar ya existe en la base de datos
         const [[existeLugar]] = await pool.query('SELECT id FROM lugares WHERE place_id = ?', [place_id]);
         if (!existeLugar) {
+            // Si el lugar no existe, se pide al usuario que lo visite primero
             return res.status(404).json({ msg: 'El lugar no está registrado. Visítalo primero para que se almacene.' });
         }
 
-        // Insertar la reseña
+        // Insertar la reseña en la base de datos
         await pool.query(
             'INSERT INTO resenas (id_usuario, id_lugar, calificacion, comentario) VALUES (?, ?, ?, ?)',
             [id_usuario, existeLugar.id, calificacion, comentario]
@@ -24,6 +26,7 @@ const crearResena = async (req, res) => {
 
         res.json({ msg: 'Reseña creada correctamente' });
     } catch (error) {
+        // Manejar errores y responder con mensaje de error
         res.status(500).json({ msg: 'Error al crear la reseña', error: error.message });
     }
 };
@@ -35,6 +38,7 @@ const editarResena = async (req, res) => {
         const id_usuario = req.user.id;
         const { calificacion, comentario } = req.body;
 
+        // Validar que la calificación esté entre 1 y 5 si se proporciona
         if (calificacion && (calificacion < 1 || calificacion > 5)) {
             return res.status(400).json({ msg: 'Calificación debe ser entre 1 y 5' });
         }
@@ -44,7 +48,7 @@ const editarResena = async (req, res) => {
         if (!resena) return res.status(404).json({ msg: 'Reseña no encontrada' });
         if (resena.id_usuario !== id_usuario && !req.user.es_admin) return res.status(403).json({ msg: 'No autorizado' });
 
-        // Construir query dinámico
+        // Construir query dinámico para actualizar solo los campos enviados
         const campos = [];
         const valores = [];
         if (calificacion !== undefined) {
@@ -60,11 +64,13 @@ const editarResena = async (req, res) => {
         }
         valores.push(id);
 
+        // Actualizar la reseña en la base de datos
         const sql = `UPDATE resenas SET ${campos.join(', ')} WHERE id = ?`;
         await pool.query(sql, valores);
 
         res.json({ msg: 'Reseña actualizada correctamente' });
     } catch (error) {
+        // Manejar errores y responder con mensaje de error
         res.status(500).json({ msg: 'Error al editar la reseña', error: error.message });
     }
 };
@@ -80,9 +86,10 @@ const eliminarResena = async (req, res) => {
         if (!resena) return res.status(404).json({ msg: 'Reseña no encontrada' });
         if (resena.id_usuario !== id_usuario && !req.user.es_admin) return res.status(403).json({ msg: 'No autorizado' });
 
+        // Eliminar la reseña de la base de datos
         await pool.query('DELETE FROM resenas WHERE id = ?', [id]);
 
-        // Guardar la eliminación en historial
+        // Guardar la eliminación en el historial de eliminaciones
         await pool.query(
             'INSERT INTO historial_eliminaciones (tipo_entidad, id_entidad, id_usuario) VALUES (?, ?, ?)',
             ['resena', id, req.user.id]
@@ -90,6 +97,7 @@ const eliminarResena = async (req, res) => {
 
         res.json({ msg: 'Reseña eliminada correctamente' });
     } catch (error) {
+        // Manejar errores y responder con mensaje de error
         res.status(500).json({ msg: 'Error al eliminar la reseña', error: error.message });
     }
 };
@@ -101,6 +109,7 @@ const listarResenas = async (req, res) => {
         const es_admin = req.user.es_admin;
         const { orden_calificacion, orden_fecha } = req.query;
 
+        // Construir la consulta base para obtener reseñas junto con nombre de usuario y lugar
         let query = `
             SELECT r.*, u.nombre AS nombre_usuario, l.nombre AS nombre_lugar
             FROM resenas r
@@ -117,11 +126,12 @@ const listarResenas = async (req, res) => {
             params.push(id_usuario);
         }
 
+        // Agregar condiciones a la consulta si existen
         if (condiciones.length > 0) {
             query += ' WHERE ' + condiciones.join(' AND ');
         }
 
-        // Ordenar
+        // Ordenar según los parámetros recibidos
         if (orden_calificacion === 'asc' || orden_calificacion === 'desc') {
             query += ` ORDER BY r.calificacion ${orden_calificacion.toUpperCase()}`;
         } else if (orden_fecha === 'reciente') {
@@ -132,13 +142,16 @@ const listarResenas = async (req, res) => {
             query += ' ORDER BY r.fecha DESC';
         }
 
+        // Ejecutar la consulta y devolver las reseñas
         const [resenas] = await pool.query(query, params);
         res.json(resenas);
     } catch (error) {
+        // Manejar errores y responder con mensaje de error
         res.status(500).json({ msg: 'Error al listar las reseñas', error: error.message });
     }
 };
 
+// Exportar las funciones del controlador
 module.exports = {
     crearResena,
     editarResena,

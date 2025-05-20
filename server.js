@@ -1,13 +1,13 @@
-require('dotenv').config();
+require('dotenv').config(); // Carga las variables de entorno desde .env
 const express = require('express');
 const fs = require('fs');
 const https = require('https');
 const http = require('http');
 
 const app = express();
-app.use(express.json());
+app.use(express.json()); // Permite recibir JSON en las peticiones
 
-// Cargar rutas
+// Cargar rutas de la API
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/favoritos', require('./routes/favoritos'));
 app.use('/api/historial', require('./routes/historial'));
@@ -19,21 +19,22 @@ app.use('/api/visitados', require('./routes/visitados'));
 const PORT_HTTP = process.env.PORT_HTTP || 3000;
 const PORT_HTTPS = process.env.PORT_HTTPS || 3443;
 
-// Intentar cargar certificados SSL
+// Intentar cargar certificados SSL para HTTPS
 let useHttps = false;
 let options = {};
 
 try {
     options = {
-        key: fs.readFileSync(process.env.SSL_KEY_PATH),
-        cert: fs.readFileSync(process.env.SSL_CERT_PATH)
+        key: fs.readFileSync(process.env.SSL_KEY_PATH),   // Ruta de la clave privada SSL
+        cert: fs.readFileSync(process.env.SSL_CERT_PATH)  // Ruta del certificado SSL
     };
     useHttps = true;
 } catch (error) {
+    // Si no se encuentran los certificados, se usará HTTP
     console.warn('⚠️ No se encontraron certificados SSL, iniciando en HTTP.');
 }
 
-// Servidor HTTPS si hay certificados, de lo contrario HTTP
+// Inicia el servidor HTTPS si hay certificados, si no, inicia HTTP
 if (useHttps) {
     https.createServer(options, app).listen(PORT_HTTPS, () => {
         console.log(`🔐 Servidor HTTPS corriendo en puerto ${PORT_HTTPS}`);

@@ -3,16 +3,16 @@ const router = express.Router();
 const authMiddleware = require('../middleware/auth');
 const resenaController = require('../controllers/resenaController');
 
-// Crear reseña
+// Ruta para crear una reseña (requiere autenticación)
 router.post('/', authMiddleware, resenaController.crearResena);
 
-// Editar reseña
+// Ruta para editar una reseña (requiere autenticación)
 router.put('/:id', authMiddleware, resenaController.editarResena);
 
-// Eliminar reseña
+// Ruta para eliminar una reseña (requiere autenticación)
 router.delete('/:id', authMiddleware, resenaController.eliminarResena);
 
-// Listar reseñas con filtros y permisos
+// Ruta para listar reseñas con filtros y permisos (requiere autenticación)
 router.get('/', authMiddleware, resenaController.listarResenas);
 
 module.exports = router;

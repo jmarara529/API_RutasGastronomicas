@@ -125,80 +125,341 @@ historial_eliminaciones
 
 ---
 
-## 🚦 Endpoints
+## 🚦 Endpoints y Ejemplos
 
 ### 🔑 Auth
 
-| Método | Endpoint         | Descripción                |
-|--------|------------------|----------------------------|
-| POST   | /api/auth/register | Registrar nuevo usuario   |
-| POST   | /api/auth/login    | Iniciar sesión y obtener token |
+#### POST `/api/auth/register`
+**Request:**
+```json
+{
+  "nombre": "Juan",
+  "correo": "juan@email.com",
+  "contraseña": "123456"
+}
+```
+**Response:**
+```json
+{ "msg": "Usuario creado" }
+```
+**Error:**
+```json
+{ "msg": "Error al registrar", "error": "El correo ya está registrado" }
+```
+
+#### POST `/api/auth/login`
+**Request:**
+```json
+{
+  "correo": "juan@email.com",
+  "contraseña": "123456"
+}
+```
+**Response:**
+```json
+{ "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6..." }
+```
+**Error:**
+```json
+{ "msg": "Credenciales inválidas" }
+```
 
 ---
 
 ### 👤 Usuarios
 
-| Método | Endpoint                    | Descripción                                 |
-|--------|-----------------------------|---------------------------------------------|
-| GET    | /api/usuarios               | Listar usuarios (solo admin)                |
-| PUT    | /api/usuarios/nombre/:id    | Editar nombre del usuario                   |
-| PUT    | /api/usuarios/correo/:id    | Editar correo del usuario                   |
-| PUT    | /api/usuarios/contraseña/:id| Editar contraseña del usuario               |
-| DELETE | /api/usuarios/:id           | Eliminar usuario (no se puede ID 1)         |
+#### GET `/api/usuarios` (Solo admin)
+**Headers:**  
+`Authorization: Bearer <token>`
+
+**Response:**
+```json
+[
+  {
+    "id": 2,
+    "nombre": "Juan",
+    "correo": "juan@email.com",
+    "fecha_creacion": "2024-05-21T10:00:00.000Z",
+    "es_admin": false
+  }
+]
+```
+
+#### PUT `/api/usuarios/nombre/:id`
+**Request:**
+```json
+{ "nombre": "Nuevo Nombre" }
+```
+**Response:**
+```json
+{ "msg": "Nombre actualizado" }
+```
+
+#### PUT `/api/usuarios/correo/:id`
+**Request:**
+```json
+{ "correo": "nuevo@email.com" }
+```
+**Response:**
+```json
+{ "msg": "Correo actualizado" }
+```
+**Error:**
+```json
+{ "msg": "Correo ya registrado" }
+```
+
+#### PUT `/api/usuarios/contraseña/:id`
+**Request:**
+```json
+{ "contraseña": "nuevaPassword" }
+```
+**Response:**
+```json
+{ "msg": "Contraseña actualizada" }
+```
+
+#### DELETE `/api/usuarios/:id`
+**Response:**
+```json
+{ "msg": "Usuario eliminado" }
+```
 
 ---
 
 ### 📝 Reseñas
 
-| Método | Endpoint           | Descripción                                 |
-|--------|--------------------|---------------------------------------------|
-| POST   | /api/resenas       | Crear reseña                                |
-| GET    | /api/resenas       | Listar reseñas propias o todas si es admin  |
-| PUT    | /api/resenas/:id   | Editar reseña propia (o cualquier si admin) |
-| DELETE | /api/resenas/:id   | Eliminar reseña propia (o cualquier si admin)|
+#### POST `/api/resenas`
+**Request:**
+```json
+{
+  "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+  "calificacion": 5,
+  "comentario": "¡Excelente lugar!"
+}
+```
+**Response:**
+```json
+{ "msg": "Reseña creada correctamente" }
+```
 
-- Filtros: `?orden_calificacion=asc|desc`, `?orden_fecha=reciente|antigua`
+#### GET `/api/resenas`
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "id_usuario": 2,
+    "id_lugar": 1,
+    "calificacion": 5,
+    "comentario": "¡Excelente lugar!",
+    "fecha": "2024-05-21T12:00:00.000Z",
+    "nombre_usuario": "Juan",
+    "nombre_lugar": "Restaurante Ejemplo"
+  }
+]
+```
+
+#### PUT `/api/resenas/:id`
+**Request:**
+```json
+{ "calificacion": 4, "comentario": "Muy bueno" }
+```
+**Response:**
+```json
+{ "msg": "Reseña actualizada correctamente" }
+```
+
+#### DELETE `/api/resenas/:id`
+**Response:**
+```json
+{ "msg": "Reseña eliminada correctamente" }
+```
 
 ---
 
 ### 📍 Lugares
 
-| Método | Endpoint                | Descripción                                 |
-|--------|-------------------------|---------------------------------------------|
-| GET    | /api/lugares            | Listar todos los lugares                    |
-| GET    | /api/lugares/:place_id  | Obtener información de un lugar             |
-| POST   | /api/lugares            | Registrar nuevo lugar                       |
-| PUT    | /api/lugares/:place_id  | Actualizar información de un lugar (admin)  |
-| DELETE | /api/lugares/:place_id  | Eliminar un lugar (admin)                   |
+#### GET `/api/lugares`
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+    "nombre": "Restaurante Ejemplo",
+    "direccion": "Calle Falsa 123",
+    "categoria": "Mexicana",
+    "ciudad": "Ciudad de México"
+  }
+]
+```
+
+#### GET `/api/lugares/:place_id`
+**Response:**
+```json
+{
+  "id": 1,
+  "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+  "nombre": "Restaurante Ejemplo",
+  "direccion": "Calle Falsa 123",
+  "categoria": "Mexicana",
+  "ciudad": "Ciudad de México"
+}
+```
+**Error:**
+```json
+{ "msg": "El lugar no está registrado en la base de datos" }
+```
+
+#### POST `/api/lugares`
+**Request:**
+```json
+{
+  "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+  "nombre": "Restaurante Ejemplo",
+  "direccion": "Calle Falsa 123",
+  "categoria": "Mexicana",
+  "ciudad": "Ciudad de México"
+}
+```
+**Response:**
+```json
+{ "msg": "Lugar registrado correctamente" }
+```
+**Error:**
+```json
+{ "msg": "El lugar ya está registrado" }
+```
+
+#### PUT `/api/lugares/:place_id`
+**Request:**
+```json
+{ "nombre": "Nuevo Nombre" }
+```
+**Response:**
+```json
+{ "msg": "Lugar actualizado correctamente" }
+```
+
+#### DELETE `/api/lugares/:place_id`
+**Response:**
+```json
+{ "msg": "Lugar eliminado correctamente" }
+```
 
 ---
 
 ### ❤️ Favoritos
 
-| Método | Endpoint                   | Descripción                    |
-|--------|----------------------------|--------------------------------|
-| POST   | /api/favoritos             | Marcar lugar como favorito     |
-| GET    | /api/favoritos             | Listar favoritos del usuario   |
-| DELETE | /api/favoritos/:id_lugar   | Eliminar favorito del usuario  |
+#### POST `/api/favoritos`
+**Request:**
+```json
+{
+  "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+  "nombre": "Restaurante Ejemplo",
+  "direccion": "Calle Falsa 123",
+  "categoria": "Mexicana",
+  "ciudad": "Ciudad de México"
+}
+```
+**Response:**
+```json
+{ "msg": "Favorito agregado" }
+```
+
+#### GET `/api/favoritos`
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+    "nombre": "Restaurante Ejemplo",
+    "direccion": "Calle Falsa 123",
+    "categoria": "Mexicana",
+    "ciudad": "Ciudad de México"
+  }
+]
+```
+
+#### DELETE `/api/favoritos/:id_lugar`
+**Response:**
+```json
+{ "msg": "Favorito eliminado" }
+```
 
 ---
 
 ### 📍 Visitados
 
-| Método | Endpoint                        | Descripción                                 |
-|--------|----------------------------------|---------------------------------------------|
-| POST   | /api/visitados                   | Marcar lugar como visitado                  |
-| GET    | /api/visitados                   | Listar lugares visitados del usuario        |
-| GET    | /api/visitados/admin             | Listar todas las visitas (solo admin, filtros opcionales) |
-| DELETE | /api/visitados/:id_lugar         | Eliminar lugar visitado por el usuario      |
+#### POST `/api/visitados`
+**Request:**
+```json
+{
+  "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+  "nombre": "Restaurante Ejemplo",
+  "direccion": "Calle Falsa 123",
+  "categoria": "Mexicana",
+  "ciudad": "Ciudad de México"
+}
+```
+**Response:**
+```json
+{ "msg": "Visita registrada correctamente" }
+```
+
+#### GET `/api/visitados`
+**Response:**
+```json
+[
+  {
+    "id_usuario": 2,
+    "id_lugar": 1,
+    "fecha_visita": "2024-05-21T12:00:00.000Z",
+    "nombre_lugar": "Restaurante Ejemplo"
+  }
+]
+```
+
+#### GET `/api/visitados/admin`
+**Response:**
+```json
+[
+  {
+    "id_usuario": 2,
+    "id_lugar": 1,
+    "fecha_visita": "2024-05-21T12:00:00.000Z",
+    "nombre_usuario": "Juan",
+    "nombre_lugar": "Restaurante Ejemplo"
+  }
+]
+```
+
+#### DELETE `/api/visitados/:id_lugar`
+**Response:**
+```json
+{ "msg": "Visita eliminada correctamente" }
+```
 
 ---
 
 ### 🕵️ Historial de Eliminaciones (Solo Admin)
 
-| Método | Endpoint         | Descripción                        |
-|--------|------------------|------------------------------------|
-| GET    | /api/historial   | Listar historial de eliminaciones  |
+#### GET `/api/historial`
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "tipo_entidad": "usuario",
+    "id_entidad": 2,
+    "id_usuario": 1,
+    "fecha_eliminacion": "2024-05-21T13:00:00.000Z",
+    "usuario_eliminador": "admin"
+  }
+]
+```
 
 ---
 
