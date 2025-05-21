@@ -1,5 +1,6 @@
 # Ignorar archivos de configuración
 .env
+docker-compose.yml
 
 # Ignorar dependencias instaladas
 node_modules/

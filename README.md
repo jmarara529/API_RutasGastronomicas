@@ -43,10 +43,11 @@ API RESTful construida con **Node.js**, **Express** y **MySQL** para gestionar u
 
 - Node.js (v18+)
 - MySQL
+- Docker y Docker Compose (opcional, recomendado para despliegue)
 
 ---
 
-## 🔧 Instalación
+## 🔧 Instalación Manual
 
 ```sh
 git clone https://github.com/jmarara529/API_RutasGastronomicas
@@ -59,19 +60,61 @@ npm start
 
 ---
 
-## 📦 Variables .env
+## 🐳 Despliegue con Docker Compose
+
+### 1. Crea tu archivo `.env` en la raíz del proyecto:
 
 ```env
 DB_HOST=localhost
 DB_USER=usuario
 DB_PASSWORD=contraseña
 DB_NAME=RutasGastronomicas
-JWT_SECRET=clave_secreta
+
 SSL_KEY_PATH=./certs/privkey.pem
 SSL_CERT_PATH=./certs/cert.pem
 PORT_HTTP=3000
 PORT_HTTPS=3443
+
+JWT_SECRET=clave_secreta
+
 ```
+
+### 2. Crea el archivo `docker-compose.yml` en la raíz del proyecto:
+
+```yaml
+version: '3.8'
+
+services:
+  api-rutasgastronomicas:
+    container_name: api-gastronomia-container
+    image: node:20
+    working_dir: /usr/src/app
+    volumes:
+      - ./:/usr/src/app
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    ports:
+      - "3000:3000"
+      - "3443:3443"
+    command: [ "sh", "-c", "npm install && node server.js" ]
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env
+    restart: always
+```
+
+**Notas:**
+- El volumen `/etc/letsencrypt:/etc/letsencrypt:ro` permite que el contenedor acceda a los certificados SSL del host.
+- Asegúrate de que tu base de datos MySQL sea accesible desde el contenedor (puede estar en otro contenedor o en el host).
+- Si usas MySQL en otro contenedor, puedes añadirlo al mismo `docker-compose.yml`.
+
+### 3. Inicia la API con Docker Compose
+
+```sh
+docker-compose up -d
+```
+
+La API estará disponible en los puertos `3000` (HTTP) o `3443` (HTTPS) si los certificados están disponibles.
 
 ---
 
