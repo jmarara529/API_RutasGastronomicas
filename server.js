@@ -20,27 +20,28 @@ const PORT_HTTP = process.env.PORT_HTTP || 3000;
 const PORT_HTTPS = process.env.PORT_HTTPS || 3443;
 
 // Intentar cargar certificados SSL para HTTPS
-let useHttps = false;
 let options = {};
+let sslOk = false;
 
 try {
     options = {
         key: fs.readFileSync(process.env.SSL_KEY_PATH),   // Ruta de la clave privada SSL
         cert: fs.readFileSync(process.env.SSL_CERT_PATH)  // Ruta del certificado SSL
     };
-    useHttps = true;
+    sslOk = true;
 } catch (error) {
-    // Si no se encuentran los certificados, se usará HTTP
-    console.warn('⚠️ No se encontraron certificados SSL, iniciando en HTTP.');
+    // Si no se encuentran los certificados, solo se iniciará HTTP
+    console.warn('⚠️ No se encontraron certificados SSL, solo se iniciará HTTP.');
 }
 
-// Inicia el servidor HTTPS si hay certificados, si no, inicia HTTP
-if (useHttps) {
+// Inicia siempre HTTP
+http.createServer(app).listen(PORT_HTTP, () => {
+    console.log(`🔓 Servidor HTTP corriendo en puerto ${PORT_HTTP}`);
+});
+
+// Si hay certificados, inicia también HTTPS
+if (sslOk) {
     https.createServer(options, app).listen(PORT_HTTPS, () => {
         console.log(`🔐 Servidor HTTPS corriendo en puerto ${PORT_HTTPS}`);
-    });
-} else {
-    http.createServer(app).listen(PORT_HTTP, () => {
-        console.log(`🔓 Servidor HTTP corriendo en puerto ${PORT_HTTP}`);
     });
 }

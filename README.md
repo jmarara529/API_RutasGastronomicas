@@ -112,7 +112,7 @@ API RESTful construida con **Node.js**, **Express** y **MySQL** para gestionar u
     docker-compose up -d
     ```
 
-    La API estará disponible en los puertos `3000` (HTTP) y `3443` (HTTPS).
+    La API estará disponible en los puertos `3000` (HTTP) y si los certificados ssl están disponibles tambien en `3443` (HTTPS).
 
 ---
 
