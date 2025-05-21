@@ -28,6 +28,16 @@ API RESTful construida con **Node.js**, **Express** y **MySQL** para gestionar u
 
 ---
 
+## 🗄️ Base de Datos
+
+- **Incluido:** El archivo `database.sql` contiene el script para crear la estructura de la base de datos y las tablas necesarias.
+- **Importante:** Debes crear la base de datos y ejecutar el script SQL **antes de iniciar la API**.
+- **Requisito:** La base de datos MySQL debe estar creada y en funcionamiento, y los datos de conexión deben coincidir con los de tu archivo `.env`.
+
+- **Ejecución:** La base de datos puede ejecutarse tanto en la máquina anfitriona como en un contenedor Docker, a elección del usuario.
+
+---
+
 ## 🚀 Instalación Manual
 
 1. Clona el repositorio y entra en la carpeta:
