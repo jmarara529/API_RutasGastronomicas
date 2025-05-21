@@ -484,7 +484,3 @@ JWT_SECRET="Tu_Clave_Secreta_Segura"
 - Todos los endpoints (excepto registro/login) requieren autenticación JWT.
 - Los endpoints de administración requieren el campo `es_admin` en el token.
 - El usuario con ID 1 es protegido y no puede ser modificado/eliminado.
-
----
-
-¿Dudas o sugerencias? ¡Contribuye o abre un issue!
