@@ -9,27 +9,8 @@ API RESTful construida con **Node.js**, **Express** y **MySQL** para gestionar u
 ```
 .
 ├── controllers/          # Lógica de negocio (usuarios, reseñas, lugares, etc.)
-│   ├── authController.js
-│   ├── favoritosController.js
-│   ├── historialController.js
-│   ├── lugarController.js
-│   ├── resenaController.js
-│   ├── usuarioController.js
-│   └── visitadosController.js
-│
 ├── middleware/           # Middlewares personalizados
-│   ├── auth.js           # Verifica JWT
-│   └── isAdmin.js        # Verifica rol administrador
-│
 ├── routes/               # Rutas organizadas por entidad
-│   ├── auth.js
-│   ├── favoritos.js
-│   ├── historial.js
-│   ├── lugares.js
-│   ├── resenas.js
-│   ├── usuarios.js
-│   └── visitados.js
-│
 ├── database.sql          # Script para crear la base de datos y tablas
 ├── db.js                 # Conexión a MySQL
 ├── .env                  # Variables de entorno
@@ -47,116 +28,110 @@ API RESTful construida con **Node.js**, **Express** y **MySQL** para gestionar u
 
 ---
 
-## 🔧 Instalación Manual
+## 🚀 Instalación Manual
 
-```sh
-git clone https://github.com/jmarara529/API_RutasGastronomicas
-cd API_RutasGastronomicas
-npm install
-cp .env.example .env
-# Edita .env con tus credenciales y claves
-npm start
-```
+1. Clona el repositorio y entra en la carpeta:
+
+    ```sh
+    git clone https://github.com/jmarara529/API_RutasGastronomicas
+    cd API_RutasGastronomicas
+    ```
+
+2. Instala las dependencias:
+
+    ```sh
+    npm install
+    ```
+
+3. Copia el archivo de ejemplo `.env` y edítalo con tus datos:
+
+    ```sh
+    cp .env.example .env
+    # Edita .env con tus credenciales y claves
+    ```
+
+4. Inicia la API:
+
+    ```sh
+    npm start
+    ```
 
 ---
 
 ## 🐳 Despliegue con Docker Compose
 
-### 1. Crea tu archivo `.env` en la raíz del proyecto:
+1. Copia el archivo de ejemplo `.env` y edítalo con tus datos:
 
-```env
-DB_HOST=localhost
-DB_USER=usuario
-DB_PASSWORD=contraseña
-DB_NAME=RutasGastronomicas
+    ```sh
+    cp .env.example .env
+    # Edita .env con tus credenciales y claves
+    ```
 
-SSL_KEY_PATH=./certs/privkey.pem
-SSL_CERT_PATH=./certs/cert.pem
-PORT_HTTP=3000
-PORT_HTTPS=3443
+2. Crea el archivo `docker-compose.yml` en la raíz del proyecto:
 
-JWT_SECRET=clave_secreta
+    ```yaml
+    version: '3.8'
 
-```
+    services:
+      api-rutasgastronomicas:
+        container_name: api-gastronomia-container
+        image: node:20
+        working_dir: /usr/src/app
+        volumes:
+          - ./:/usr/src/app
+          - /etc/letsencrypt:/etc/letsencrypt:ro
+        ports:
+          - "3000:3000"
+          - "3443:3443"
+        command: [ "sh", "-c", "npm install && node server.js" ]
+        environment:
+          - NODE_ENV=production
+        env_file:
+          - .env
+        restart: always
+    ```
 
-### 2. Crea el archivo `docker-compose.yml` en la raíz del proyecto:
+    **Notas:**
+    - El volumen `/etc/letsencrypt:/etc/letsencrypt:ro` permite que el contenedor acceda a los certificados SSL del host.
+    - Asegúrate de que tu base de datos MySQL sea accesible desde el contenedor (puede estar en otro contenedor o en el host).
+    - Si usas MySQL en otro contenedor, puedes añadirlo al mismo `docker-compose.yml`.
 
-```yaml
-version: '3.8'
+3. Inicia la API con Docker Compose:
 
-services:
-  api-rutasgastronomicas:
-    container_name: api-gastronomia-container
-    image: node:20
-    working_dir: /usr/src/app
-    volumes:
-      - ./:/usr/src/app
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-    ports:
-      - "3000:3000"
-      - "3443:3443"
-    command: [ "sh", "-c", "npm install && node server.js" ]
-    environment:
-      - NODE_ENV=production
-    env_file:
-      - .env
-    restart: always
-```
+    ```sh
+    docker-compose up -d
+    ```
 
-**Notas:**
-- El volumen `/etc/letsencrypt:/etc/letsencrypt:ro` permite que el contenedor acceda a los certificados SSL del host.
-- Asegúrate de que tu base de datos MySQL sea accesible desde el contenedor (puede estar en otro contenedor o en el host).
-- Si usas MySQL en otro contenedor, puedes añadirlo al mismo `docker-compose.yml`.
-
-### 3. Inicia la API con Docker Compose
-
-```sh
-docker-compose up -d
-```
-
-La API estará disponible en los puertos `3000` (HTTP) o `3443` (HTTPS) si los certificados están disponibles.
+    La API estará disponible en los puertos `3000` (HTTP) y `3443` (HTTPS).
 
 ---
 
-## 🧱 Estructura de la Base de Datos
+## 🧩 Variables de Entorno `.env` (Ejemplo)
 
-```sql
-usuarios
-├─ id (PK)
-├─ nombre
-├─ correo (UNIQUE)
-├─ contraseña (bcrypt)
-├─ es_admin (BOOLEAN)
-├─ fecha_creacion
+```env
+DB_HOST=localhost
+DB_USER=usuario_db
+DB_PASSWORD=contraseña_db
+DB_NAME=RutasGastronomicas
 
-lugares
-├─ id (PK)
-├─ place_id (UNIQUE)
-├─ nombre, direccion, categoria, ciudad
+SSL_KEY_PATH=/etc/letsencrypt/live/tu-dominio.com/privkey.pem
+SSL_CERT_PATH=/etc/letsencrypt/live/tu-dominio.com/fullchain.pem
+PORT_HTTP=3000
+PORT_HTTPS=3443
 
-resenas
-├─ id (PK)
-├─ id_usuario (FK)
-├─ id_lugar (FK)
-├─ calificacion, comentario, fecha
-
-favoritos
-├─ id_usuario (FK)
-├─ id_lugar (FK)
-├─ fecha_agregado
-
-visitados
-├─ id_usuario (FK)
-├─ id_lugar (FK)
-├─ fecha_visita
-
-historial_eliminaciones
-├─ id (PK)
-├─ tipo_entidad
-├─ id_entidad
-├─ id_usuario
-├─ fecha_eliminacion
+JWT_SECRET="Tu_Clave_Secreta_Segura"
 ```
+
+---
+
+## 🗄️ Estructura de la Base de Datos
+
+- **usuarios**: id, nombre, correo, contraseña, es_admin, fecha_creacion
+- **lugares**: id, place_id, nombre, direccion, categoria, ciudad
+- **resenas**: id, id_usuario, id_lugar, calificacion, comentario, fecha
+- **favoritos**: id_usuario, id_lugar, fecha_agregado
+- **visitados**: id_usuario, id_lugar, fecha_visita
+- **historial_eliminaciones**: id, tipo_entidad, id_entidad, id_usuario, fecha_eliminacion
 
 ---
 
@@ -185,10 +160,6 @@ historial_eliminaciones
 ```json
 { "msg": "Usuario creado" }
 ```
-**Error:**
-```json
-{ "msg": "Error al registrar", "error": "El correo ya está registrado" }
-```
 
 #### POST `/api/auth/login`
 **Request:**
@@ -201,10 +172,6 @@ historial_eliminaciones
 **Response:**
 ```json
 { "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6..." }
-```
-**Error:**
-```json
-{ "msg": "Credenciales inválidas" }
 ```
 
 ---
@@ -246,10 +213,6 @@ historial_eliminaciones
 **Response:**
 ```json
 { "msg": "Correo actualizado" }
-```
-**Error:**
-```json
-{ "msg": "Correo ya registrado" }
 ```
 
 #### PUT `/api/usuarios/contraseña/:id`
@@ -521,3 +484,7 @@ historial_eliminaciones
 - Todos los endpoints (excepto registro/login) requieren autenticación JWT.
 - Los endpoints de administración requieren el campo `es_admin` en el token.
 - El usuario con ID 1 es protegido y no puede ser modificado/eliminado.
+
+---
+
+¿Dudas o sugerencias? ¡Contribuye o abre un issue!
