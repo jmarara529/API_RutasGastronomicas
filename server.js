@@ -3,9 +3,13 @@ const express = require('express');
 const fs = require('fs');
 const https = require('https');
 const http = require('http');
+const cors = require('cors'); // <-- Importa cors
 
 const app = express();
 app.use(express.json()); // Permite recibir JSON en las peticiones
+
+// Permitir todas las conexiones externas (CORS abierto)
+app.use(cors()); // <-- Permite cualquier origen
 
 // Cargar rutas de la API
 app.use('/api/auth', require('./routes/auth'));
