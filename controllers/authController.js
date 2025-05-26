@@ -5,19 +5,30 @@ const jwt = require('jsonwebtoken');
 // Controlador para registrar un nuevo usuario
 exports.registrar = async (req, res) => {
   const { nombre, correo, contraseña } = req.body;
-  // Hashea la contraseña antes de guardarla
-  const hash = await bcrypt.hash(contraseña, 10);
   try {
+    // Verifica si el usuario ya existe
+    const [[usuarioExistente]] = await db.execute('SELECT id FROM usuarios WHERE correo = ?', [correo]);
+    if (usuarioExistente) {
+      return res.status(409).json({ msg: 'Error al registrar', error: 'El usuario ya existe' });
+    }
+
+    // Hashea la contraseña antes de guardarla
+    const hash = await bcrypt.hash(contraseña, 10);
+
     // Inserta el nuevo usuario en la base de datos
-    const [result] = await db.execute(
+    await db.execute(
       'INSERT INTO usuarios (nombre, correo, contraseña) VALUES (?, ?, ?)',
       [nombre, correo, hash]
     );
     // Responde con éxito
     res.status(201).json({ msg: 'Usuario creado' });
   } catch (e) {
-    // Si hay error (por ejemplo, correo duplicado), responde con error
-    res.status(400).json({ msg: 'Error al registrar', error: e.message });
+    // Errores de validación de campos
+    if (!nombre || !correo || !contraseña) {
+      return res.status(400).json({ msg: 'Error al registrar', error: 'Faltan campos obligatorios' });
+    }
+    // Otros errores internos
+    res.status(500).json({ msg: 'Error interno al registrar', error: e.message });
   }
 };
 
