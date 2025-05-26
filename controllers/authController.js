@@ -50,3 +50,4 @@ exports.login = async (req, res) => {
   // Devuelve el token al cliente
   res.json({ token });
 };
+
