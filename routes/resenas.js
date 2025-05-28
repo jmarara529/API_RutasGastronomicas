@@ -12,7 +12,7 @@ router.put('/:id', authMiddleware, resenaController.editarResena);
 // Ruta para eliminar una reseña (requiere autenticación)
 router.delete('/:id', authMiddleware, resenaController.eliminarResena);
 
-// Ruta para listar reseñas con filtros y permisos (requiere autenticación)
+// Ruta para listar reseñas con filtros y permisos (requiere autenticación SIEMPRE)
 router.get('/', authMiddleware, resenaController.listarResenas);
 
 module.exports = router;

@@ -106,25 +106,17 @@ const eliminarResena = async (req, res) => {
 const listarResenas = async (req, res) => {
     try {
         const { place_id, orden_calificacion, orden_fecha } = req.query;
+        if (!place_id) {
+            return res.status(400).json({ msg: 'Debe especificar un place_id para listar reseñas.' });
+        }
         let query = `
             SELECT r.*, u.nombre AS nombre_usuario, l.nombre AS nombre_lugar
             FROM resenas r
             JOIN usuarios u ON r.id_usuario = u.id
             JOIN lugares l ON r.id_lugar = l.id
+            WHERE l.place_id = ?
         `;
-        const condiciones = [];
-        const params = [];
-        if (place_id) {
-            condiciones.push('l.place_id = ?');
-            params.push(place_id);
-        } else if (!req.user?.es_admin) {
-            // Si no es admin y no hay place_id, solo mostrar reseñas propias
-            condiciones.push('r.id_usuario = ?');
-            params.push(req.user.id);
-        }
-        if (condiciones.length > 0) {
-            query += ' WHERE ' + condiciones.join(' AND ');
-        }
+        const params = [place_id];
         if (orden_calificacion === 'asc' || orden_calificacion === 'desc') {
             query += ` ORDER BY r.calificacion ${orden_calificacion.toUpperCase()}`;
         } else if (orden_fecha === 'reciente') {
