@@ -81,13 +81,17 @@ exports.detallesLugar = async (req, res) => {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': process.env.GOOGLE_PLACES_API_KEY,
           'X-Goog-FieldMask': 'id,displayName,formattedAddress,location,types,rating,nationalPhoneNumber,websiteUri,regularOpeningHours,photos'
-        }
+        },
+        validateStatus: () => true // Permite capturar el body de error de Google
       }
     );
+    if (response.status === 404) {
+      return res.status(404).json({ msg: 'No se encontró el sitio', google: response.data });
+    }
     if (response.data && response.data.place) {
       res.json({ result: response.data.place });
     } else {
-      res.status(404).json({ msg: 'No se encontró el sitio' });
+      res.status(500).json({ msg: 'Respuesta inesperada de Google', google: response.data });
     }
   } catch (error) {
     res.status(500).json({ msg: 'Error al consultar detalles de Google Places', error: error.message });
