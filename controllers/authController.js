@@ -42,8 +42,8 @@ exports.login = async (req, res) => {
     return res.status(401).json({ msg: 'Credenciales inválidas' });
   }
 
-  // Genera un token JWT con el id y nombre del usuario
-  const token = jwt.sign({ id: usuario.id, nombre: usuario.nombre }, process.env.JWT_SECRET, {
+  // Genera un token JWT con el id, nombre y es_admin del usuario
+  const token = jwt.sign({ id: usuario.id, nombre: usuario.nombre, es_admin: !!usuario.es_admin }, process.env.JWT_SECRET, {
     expiresIn: '1d'
   });
 
