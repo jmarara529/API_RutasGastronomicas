@@ -105,33 +105,26 @@ const eliminarResena = async (req, res) => {
 // 📌 Listar reseñas
 const listarResenas = async (req, res) => {
     try {
-        const id_usuario = req.user.id;
-        const es_admin = req.user.es_admin;
-        const { orden_calificacion, orden_fecha } = req.query;
-
-        // Construir la consulta base para obtener reseñas junto con nombre de usuario y lugar
+        const { place_id, orden_calificacion, orden_fecha } = req.query;
         let query = `
             SELECT r.*, u.nombre AS nombre_usuario, l.nombre AS nombre_lugar
             FROM resenas r
             JOIN usuarios u ON r.id_usuario = u.id
             JOIN lugares l ON r.id_lugar = l.id
         `;
-
         const condiciones = [];
         const params = [];
-
-        // Si no es admin, solo mostrar reseñas propias
-        if (!es_admin) {
+        if (place_id) {
+            condiciones.push('l.place_id = ?');
+            params.push(place_id);
+        } else if (!req.user?.es_admin) {
+            // Si no es admin y no hay place_id, solo mostrar reseñas propias
             condiciones.push('r.id_usuario = ?');
-            params.push(id_usuario);
+            params.push(req.user.id);
         }
-
-        // Agregar condiciones a la consulta si existen
         if (condiciones.length > 0) {
             query += ' WHERE ' + condiciones.join(' AND ');
         }
-
-        // Ordenar según los parámetros recibidos
         if (orden_calificacion === 'asc' || orden_calificacion === 'desc') {
             query += ` ORDER BY r.calificacion ${orden_calificacion.toUpperCase()}`;
         } else if (orden_fecha === 'reciente') {
@@ -141,12 +134,9 @@ const listarResenas = async (req, res) => {
         } else {
             query += ' ORDER BY r.fecha DESC';
         }
-
-        // Ejecutar la consulta y devolver las reseñas
         const [resenas] = await pool.query(query, params);
         res.json(resenas);
     } catch (error) {
-        // Manejar errores y responder con mensaje de error
         res.status(500).json({ msg: 'Error al listar las reseñas', error: error.message });
     }
 };
