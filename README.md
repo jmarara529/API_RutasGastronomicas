@@ -1,6 +1,7 @@
 # 📍 Rutas Gastronómicas - API REST
 
-API RESTful construida con **Node.js**, **Express** y **MySQL** para gestionar una red social de experiencias gastronómicas. Permite a los usuarios registrar lugares visitados, dejar reseñas, guardar favoritos y a los administradores gestionar usuarios y ver el historial de eliminaciones.
+API RESTful construida con **Node.js**, **Express** y **MySQL** para gestionar una red social de experiencias gastronómicas. Permite a los usuarios registrar lugares visitados, dejar reseñas, guardar favoritos y a los administradores gestionar usuarios y ver el historial de eliminaciones.  
+**Incluye integración con Google Places API para búsquedas de lugares por texto, coordenadas y detalles.**
 
 ---
 
@@ -8,7 +9,7 @@ API RESTful construida con **Node.js**, **Express** y **MySQL** para gestionar u
 
 ```
 .
-├── controllers/          # Lógica de negocio (usuarios, reseñas, lugares, etc.)
+├── controllers/          # Lógica de negocio (usuarios, reseñas, lugares, places, etc.)
 ├── middleware/           # Middlewares personalizados
 ├── routes/               # Rutas organizadas por entidad
 ├── database.sql          # Script para crear la base de datos y tablas
@@ -33,7 +34,6 @@ API RESTful construida con **Node.js**, **Express** y **MySQL** para gestionar u
 - **Incluido:** El archivo `database.sql` contiene el script para crear la estructura de la base de datos y las tablas necesarias.
 - **Importante:** Debes crear la base de datos y ejecutar el script SQL **antes de iniciar la API**.
 - **Requisito:** La base de datos MySQL debe estar creada y en funcionamiento, y los datos de conexión deben coincidir con los de tu archivo `.env`.
-
 - **Ejecución:** La base de datos puede ejecutarse tanto en la máquina anfitriona como en un contenedor Docker, a elección del usuario.
 
 ---
@@ -112,7 +112,7 @@ API RESTful construida con **Node.js**, **Express** y **MySQL** para gestionar u
     docker-compose up -d
     ```
 
-    La API estará disponible en los puertos `3000` (HTTP) y si los certificados ssl están disponibles tambien en `3443` (HTTPS).
+    La API estará disponible en los puertos `3000` (HTTP) y si los certificados ssl están disponibles también en `3443` (HTTPS).
 
 ---
 
@@ -130,6 +130,7 @@ PORT_HTTP=3000
 PORT_HTTPS=3443
 
 JWT_SECRET="Tu_Clave_Secreta_Segura"
+GOOGLE_PLACES_API_KEY=tu_clave_google_places
 ```
 
 ---
@@ -182,6 +183,64 @@ JWT_SECRET="Tu_Clave_Secreta_Segura"
 **Response:**
 ```json
 { "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6..." }
+```
+
+---
+
+### 🌍 Google Places
+
+#### GET `/api/places/buscar?query=Gran+Vía+Madrid`
+**Descripción:** Busca lugares por texto (nombre de calle, ciudad, etc.).
+**Response:**
+```json
+{
+  "results": [
+    {
+      "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+      "name": "Restaurante Ejemplo",
+      "formatted_address": "Calle Falsa 123, Ciudad de México",
+      ...
+    }
+  ],
+  "status": "OK"
+}
+```
+
+#### GET `/api/places/cercanos?lat=40.4168&lng=-3.7038&radius=1000&type=restaurant`
+**Descripción:** Busca lugares cercanos a unas coordenadas (latitud, longitud).  
+- `radius` es opcional (metros, por defecto 500)
+- `type` es opcional (ejemplo: restaurant, bar, etc.)
+
+**Response:**
+```json
+{
+  "results": [
+    {
+      "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+      "name": "Restaurante Cercano",
+      "vicinity": "Calle Ejemplo, Madrid",
+      ...
+    }
+  ],
+  "status": "OK"
+}
+```
+
+#### GET `/api/places/detalles?place_id=ChIJN1t_tDeuEmsRUsoyG83frY4`
+**Descripción:** Obtiene los detalles de un lugar por su `place_id`.
+
+**Response:**
+```json
+{
+  "result": {
+    "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+    "name": "Restaurante Ejemplo",
+    "formatted_address": "Calle Falsa 123, Ciudad de México",
+    "geometry": { ... },
+    ...
+  },
+  "status": "OK"
+}
 ```
 
 ---
@@ -483,6 +542,7 @@ JWT_SECRET="Tu_Clave_Secreta_Segura"
 
 - Los usuarios pueden registrarse, iniciar sesión y gestionar sus datos.
 - Los lugares se identifican por `place_id` (Google Places).
+- Puedes buscar lugares por nombre de calle, ciudad o coordenadas (lat/lng) gracias a la integración con Google Places.
 - Antes de guardar una reseña, favorito o visita, se verifica si el lugar existe en la base de datos.
 - Los administradores pueden ver el historial de eliminaciones y gestionar usuarios/lugares.
 - Cada eliminación relevante se registra en la tabla `historial_eliminaciones`.
@@ -494,3 +554,6 @@ JWT_SECRET="Tu_Clave_Secreta_Segura"
 - Todos los endpoints (excepto registro/login) requieren autenticación JWT.
 - Los endpoints de administración requieren el campo `es_admin` en el token.
 - El usuario con ID 1 es protegido y no puede ser modificado/eliminado.
+- Para usar la integración de Google Places, necesitas una clave válida en tu `.env` (`GOOGLE_PLACES_API_KEY`).
+
+---

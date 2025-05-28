@@ -19,6 +19,7 @@ app.use('/api/lugares', require('./routes/lugares'));
 app.use('/api/resenas', require('./routes/resenas'));
 app.use('/api/usuarios', require('./routes/usuarios'));
 app.use('/api/visitados', require('./routes/visitados'));
+app.use('/api/places', require('./routes/places'));
 
 const PORT_HTTP = process.env.PORT_HTTP || 3000;
 const PORT_HTTPS = process.env.PORT_HTTPS || 3443;
