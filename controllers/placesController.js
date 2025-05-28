@@ -86,7 +86,23 @@ exports.detallesLugar = async (req, res) => {
       }
     );
     if (response.status === 404) {
-      return res.status(404).json({ msg: 'No se encontró el sitio', google: response.data });
+      // Prueba con el endpoint legacy si falla el de la API New
+      try {
+        const legacy = await axios.get('https://maps.googleapis.com/maps/api/place/details/json', {
+          params: {
+            place_id,
+            key: process.env.GOOGLE_PLACES_API_KEY,
+            language: 'es'
+          }
+        });
+        if (legacy.data && legacy.data.result) {
+          return res.json({ result: legacy.data.result, legacy: true });
+        } else {
+          return res.status(404).json({ msg: 'No se encontró el sitio (ni en legacy)', google: response.data, legacy: legacy.data });
+        }
+      } catch (legacyError) {
+        return res.status(500).json({ msg: 'Error al consultar detalles (legacy)', error: legacyError.message, google: response.data });
+      }
     }
     if (response.data && response.data.place) {
       res.json({ result: response.data.place });
