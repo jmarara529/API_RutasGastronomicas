@@ -69,13 +69,26 @@ exports.detallesLugar = async (req, res) => {
     return res.status(400).json({ msg: 'El parámetro "place_id" es obligatorio' });
   }
   try {
-    const response = await axios.get('https://maps.googleapis.com/maps/api/place/details/json', {
-      params: {
-        place_id,
-        key: process.env.GOOGLE_PLACES_API_KEY
+    // Usar Places API (New) para obtener detalles por place_id
+    const response = await axios.post(
+      'https://places.googleapis.com/v1/places:lookup',
+      {
+        placeId: place_id,
+        languageCode: 'es'
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': process.env.GOOGLE_PLACES_API_KEY,
+          'X-Goog-FieldMask': 'id,displayName,formattedAddress,location,types,rating,nationalPhoneNumber,websiteUri,regularOpeningHours,photos'
+        }
       }
-    });
-    res.json(response.data);
+    );
+    if (response.data && response.data.place) {
+      res.json({ result: response.data.place });
+    } else {
+      res.status(404).json({ msg: 'No se encontró el sitio' });
+    }
   } catch (error) {
     res.status(500).json({ msg: 'Error al consultar detalles de Google Places', error: error.message });
   }
