@@ -84,7 +84,7 @@ const eliminarResena = async (req, res) => {
         // Verificar que la reseña pertenece al usuario o que es admin
         const [[resena]] = await pool.query('SELECT id_usuario FROM resenas WHERE id = ?', [id]);
         if (!resena) return res.status(404).json({ msg: 'Reseña no encontrada' });
-        if (resena.id_usuario !== id_usuario && !req.user.es_admin) return res.status(403).json({ msg: 'No autorizado' });
+        if (Number(resena.id_usuario) !== Number(id_usuario) && !req.user.es_admin) return res.status(403).json({ msg: 'No autorizado' });
 
         // Eliminar la reseña de la base de datos
         await pool.query('DELETE FROM resenas WHERE id = ?', [id]);
@@ -110,7 +110,7 @@ const listarResenas = async (req, res) => {
             return res.status(400).json({ msg: 'Debe especificar un place_id para listar reseñas.' });
         }
         let query = `
-            SELECT r.*, u.nombre AS nombre_usuario, l.nombre AS nombre_lugar
+            SELECT r.*, u.nombre AS nombre_usuario, u.correo AS correo_usuario, l.nombre AS nombre_lugar
             FROM resenas r
             JOIN usuarios u ON r.id_usuario = u.id
             JOIN lugares l ON r.id_lugar = l.id
