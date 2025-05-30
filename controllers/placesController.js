@@ -1,12 +1,13 @@
 const axios = require('axios');
 
-// Buscar lugares por texto (Places API NEW)
+// Buscar lugares por texto (Places API NEW, con fallback a Geocoding+Nearby)
 exports.buscarLugar = async (req, res) => {
-  const { query } = req.query;
+  const { query, radius = 1000, type } = req.query;
   if (!query) {
     return res.status(400).json({ msg: 'El parámetro "query" es obligatorio' });
   }
   try {
+    // 1. Intentar búsqueda directa por texto
     const response = await axios.post(
       'https://places.googleapis.com/v1/places:searchText',
       {
@@ -22,9 +23,53 @@ exports.buscarLugar = async (req, res) => {
         }
       }
     );
-    res.json({ results: response.data.places || [] });
+    if (response.data && response.data.places && response.data.places.length > 0) {
+      return res.json({ results: response.data.places });
+    }
+    // 2. Si no hay resultados, intentar geocodificar el texto
+    const geo = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
+      params: {
+        address: query,
+        key: process.env.GOOGLE_PLACES_API_KEY,
+        language: 'es'
+      }
+    });
+    if (
+      geo.data &&
+      geo.data.results &&
+      geo.data.results.length > 0 &&
+      geo.data.results[0].geometry &&
+      geo.data.results[0].geometry.location
+    ) {
+      const { lat, lng } = geo.data.results[0].geometry.location;
+      // 3. Buscar lugares cercanos a esas coordenadas
+      const nearby = await axios.post(
+        'https://places.googleapis.com/v1/places:searchNearby',
+        {
+          locationRestriction: {
+            circle: {
+              center: { latitude: lat, longitude: lng },
+              radius: parseInt(radius, 10)
+            }
+          },
+          includedTypes: type ? [type] : undefined,
+          languageCode: 'es',
+          maxResultCount: 20
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Goog-Api-Key': process.env.GOOGLE_PLACES_API_KEY,
+            'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.location,places.types,places.id,places.rating,places.nationalPhoneNumber,places.websiteUri,places.regularOpeningHours,places.photos'
+          }
+        }
+      );
+      return res.json({ results: nearby.data.places || [] });
+    }
+    // Si tampoco hay resultados, devolver vacío
+    return res.json({ results: [] });
   } catch (error) {
-    res.status(500).json({ msg: 'Error al consultar Google Places (New)', error: error.message });
+    res.status(500).json({ msg: 'Error al consultar Google Places (New o Geocoding)', error: error.message });
   }
 };
 
