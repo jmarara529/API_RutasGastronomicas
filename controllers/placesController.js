@@ -45,6 +45,8 @@ exports.buscarLugar = async (req, res) => {
     ) {
       const { lat, lng } = geo.data.results[0].geometry.location;
       // 3. Buscar lugares cercanos a esas coordenadas
+      // Si no se especifica tipo, buscar restaurantes y bares por defecto
+      const includedTypes = type ? [type] : ['restaurant', 'bar'];
       const nearby = await axios.post(
         'https://places.googleapis.com/v1/places:searchNearby',
         {
@@ -54,7 +56,7 @@ exports.buscarLugar = async (req, res) => {
               radius: parseInt(radius, 10)
             }
           },
-          includedTypes: type ? [type] : undefined,
+          includedTypes,
           languageCode: 'es',
           maxResultCount: 20
         },
