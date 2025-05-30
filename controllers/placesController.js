@@ -23,10 +23,12 @@ exports.buscarLugar = async (req, res) => {
         }
       }
     );
-    if (response.data && response.data.places && response.data.places.length > 0) {
-      return res.json({ results: response.data.places });
+    // Filtrar resultados que sean realmente lugares (no solo calles o ciudades)
+    const filtered = (response.data.places || []).filter(p => Array.isArray(p.types) && p.types.some(t => t !== 'route' && t !== 'locality' && t !== 'political'));
+    if (filtered.length > 0) {
+      return res.json({ results: filtered });
     }
-    // 2. Si no hay resultados, intentar geocodificar el texto
+    // 2. Si no hay resultados útiles, intentar geocodificar el texto
     const geo = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
       params: {
         address: query,
