@@ -15,4 +15,7 @@ router.delete('/:id', authMiddleware, resenaController.eliminarResena);
 // Ruta para listar reseñas con filtros y permisos (requiere autenticación SIEMPRE)
 router.get('/', authMiddleware, resenaController.listarResenas);
 
+// Ruta para obtener las reseñas del usuario autenticado
+router.get('/usuario', authMiddleware, resenaController.listarResenasUsuario);
+
 module.exports = router;
