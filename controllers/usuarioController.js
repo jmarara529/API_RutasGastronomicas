@@ -90,15 +90,29 @@ const eliminarUsuario = async (req, res) => {
   }
 };
 
-// Listar todos los usuarios (solo admin)
+// Listar todos los usuarios (admin: todos, usuario normal: solo su info)
 const listarUsuarios = async (req, res) => {
   try {
-    // Solo un administrador puede listar todos los usuarios
-    if (!req.user.es_admin) return res.status(403).json({ msg: 'No autorizado' });
+    if (req.user.es_admin) {
+      // Admin: lista todos los usuarios
+      const [usuarios] = await pool.query('SELECT id, nombre, correo, fecha_creacion, es_admin FROM usuarios');
+      return res.json(usuarios);
+    } else {
+      // Usuario normal: solo su propio usuario
+      const [usuarios] = await pool.query('SELECT id, nombre, correo, fecha_creacion, es_admin FROM usuarios WHERE id = ?', [req.user.id]);
+      return res.json(usuarios);
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
-    // Consulta los usuarios y devuelve información básica
-    const [usuarios] = await pool.query('SELECT id, nombre, correo, fecha_creacion, es_admin FROM usuarios');
-    res.json(usuarios);
+// Obtener solo el usuario autenticado
+const obtenerUsuarioAutenticado = async (req, res) => {
+  try {
+    const [usuarios] = await pool.query('SELECT id, nombre, correo, fecha_creacion, es_admin FROM usuarios WHERE id = ?', [req.user.id]);
+    if (!usuarios.length) return res.status(404).json({ msg: 'Usuario no encontrado' });
+    res.json(usuarios[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -110,4 +124,5 @@ module.exports = {
   editarContraseña,
   eliminarUsuario,
   listarUsuarios,
+  obtenerUsuarioAutenticado,
 };
