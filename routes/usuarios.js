@@ -17,7 +17,7 @@ router.put('/nombre/:id', authMiddleware, usuarioController.editarNombre);
 router.put('/correo/:id', authMiddleware, usuarioController.editarCorreo);
 
 // Editar contraseña de usuario
-router.put('/contraseña/:id', authMiddleware, usuarioController.editarContraseña);
+router.put('/contrasena/:id', authMiddleware, usuarioController.editarContraseña);
 
 // Eliminar usuario
 router.delete('/:id', authMiddleware, usuarioController.eliminarUsuario);

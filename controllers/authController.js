@@ -47,7 +47,7 @@ exports.login = async (req, res) => {
     expiresIn: '1d'
   });
 
-  // Devuelve el token y el campo es_admin al cliente
-  res.json({ token, es_admin: !!usuario.es_admin }); // <-- esto convierte 0/1 a booleano
+  // Devuelve el token, el campo es_admin y el id al cliente
+  res.json({ token, es_admin: !!usuario.es_admin, id: usuario.id }); // <-- esto convierte 0/1 a booleano
 };
 
