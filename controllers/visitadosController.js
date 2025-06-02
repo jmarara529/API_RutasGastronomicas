@@ -38,7 +38,7 @@ const listarVisitadosUsuario = async (req, res) => {
   try {
     const id_usuario = req.user.id;
     const [visitados] = await pool.query(
-      `SELECT v.*, l.nombre AS nombre_lugar, v.fecha_visita
+      `SELECT v.*, l.nombre AS nombre_lugar, l.place_id, v.fecha_visita
        FROM visitados v
        JOIN lugares l ON v.id_lugar = l.id
        WHERE v.id_usuario = ?
