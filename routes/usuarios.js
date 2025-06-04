@@ -28,4 +28,7 @@ router.put('/:id', authMiddleware, isAdmin, usuarioController.editarUsuarioAdmin
 // Eliminar usuario
 router.delete('/:id', authMiddleware, usuarioController.eliminarUsuario);
 
+// Crear usuario (registro)
+router.post('/', usuarioController.crearUsuario);
+
 module.exports = router;

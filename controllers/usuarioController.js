@@ -1,6 +1,27 @@
 const pool = require('../db');
 const bcrypt = require('bcryptjs');
 
+// Crear usuario (registro)
+const crearUsuario = async (req, res) => {
+  try {
+    const { nombre, correo, contraseña } = req.body;
+    if (!nombre || !correo || !contraseña) return res.status(400).json({ msg: 'Faltan datos obligatorios' });
+    const hash = await bcrypt.hash(contraseña, 10);
+    const [result] = await pool.query('INSERT INTO usuarios (nombre, correo, contraseña) VALUES (?, ?, ?)', [nombre, correo, hash]);
+    // Registrar en historial de acciones
+    await pool.query(
+      'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
+      ['usuario', result.insertId, result.insertId, 'crear']
+    );
+    res.status(201).json({ msg: 'Usuario creado', id: result.insertId });
+  } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ msg: 'Correo ya registrado' });
+    }
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Editar el nombre de un usuario
 const editarNombre = async (req, res) => {
   try {
@@ -78,7 +99,7 @@ const eliminarUsuario = async (req, res) => {
     // Elimina el usuario de la base de datos
     await pool.query('DELETE FROM usuarios WHERE id = ?', [id]);
 
-    // Registra la eliminación en el historial
+    // Registrar en historial (si el usuario ya no existe, usar req.user.id como ejecutor)
     await pool.query(
       'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
       ['usuario', id, req.user.id, 'eliminar']
@@ -164,6 +185,7 @@ const editarUsuarioAdmin = async (req, res) => {
 };
 
 module.exports = {
+  crearUsuario,
   editarNombre,
   editarCorreo,
   editarContraseña,
