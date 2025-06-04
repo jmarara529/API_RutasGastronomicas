@@ -55,7 +55,24 @@ const eliminarFavorito = async (req, res) => {
   }
 };
 
+// Lista los lugares favoritos del usuario autenticado
+const listarFavoritos = async (req, res) => {
+  try {
+    const id_usuario = req.user.id;
+    const [favoritos] = await pool.query(
+      `SELECT l.* FROM favoritos f
+       JOIN lugares l ON f.id_lugar = l.id
+       WHERE f.id_usuario = ?`,
+      [id_usuario]
+    );
+    res.json(favoritos);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   agregarFavorito,
   eliminarFavorito,
+  listarFavoritos,
 };
