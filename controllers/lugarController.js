@@ -39,9 +39,16 @@ const crearLugar = async (req, res) => {
             'INSERT INTO lugares (place_id, nombre, direccion, categoria, ciudad) VALUES (?, ?, ?, ?, ?)',
             [place_id, nombre, direccion, categoria, ciudad]
         );
-        res.status(201).json({ msg: 'Lugar registrado correctamente' });
+        // Obtener el id del lugar recién creado
+        const [[nuevoLugar]] = await pool.query('SELECT id FROM lugares WHERE place_id = ?', [place_id]);
+        // Registrar en historial de acciones
+        await pool.query(
+            'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
+            ['lugar', place_id, req.user.id, 'crear']
+        );
+        res.status(201).json({ msg: 'Lugar creado exitosamente', lugar: { id: nuevoLugar.id, place_id, nombre, direccion, categoria, ciudad } });
     } catch (error) {
-        res.status(500).json({ msg: 'Error al registrar el lugar', error: error.message });
+        res.status(500).json({ msg: 'Error al crear el lugar', error: error.message });
     }
 };
 
@@ -50,35 +57,22 @@ const actualizarLugar = async (req, res) => {
     try {
         const { place_id } = req.params;
         const { nombre, direccion, categoria, ciudad } = req.body;
-        const [[lugar]] = await pool.query('SELECT id FROM lugares WHERE place_id = ?', [place_id]);
-        if (!lugar) {
+        const [result] = await pool.query('UPDATE lugares SET nombre = ?, direccion = ?, categoria = ?, ciudad = ? WHERE place_id = ?', [
+            nombre,
+            direccion,
+            categoria,
+            ciudad,
+            place_id,
+        ]);
+        if (result.affectedRows === 0) {
             return res.status(404).json({ msg: 'El lugar no está registrado en la base de datos' });
         }
-        const campos = [];
-        const valores = [];
-        if (nombre) {
-            campos.push('nombre = ?');
-            valores.push(nombre);
-        }
-        if (direccion) {
-            campos.push('direccion = ?');
-            valores.push(direccion);
-        }
-        if (categoria) {
-            campos.push('categoria = ?');
-            valores.push(categoria);
-        }
-        if (ciudad) {
-            campos.push('ciudad = ?');
-            valores.push(ciudad);
-        }
-        if (campos.length === 0) {
-            return res.status(400).json({ msg: 'No hay campos para actualizar' });
-        }
-        valores.push(place_id);
-        const sql = `UPDATE lugares SET ${campos.join(', ')} WHERE place_id = ?`;
-        await pool.query(sql, valores);
-        res.json({ msg: 'Lugar actualizado correctamente' });
+        // Registrar en historial de acciones
+        await pool.query(
+            'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
+            ['lugar', place_id, req.user.id, 'actualizar']
+        );
+        res.json({ msg: 'Lugar actualizado exitosamente' });
     } catch (error) {
         res.status(500).json({ msg: 'Error al actualizar el lugar', error: error.message });
     }
@@ -88,15 +82,14 @@ const actualizarLugar = async (req, res) => {
 const eliminarLugar = async (req, res) => {
     try {
         const { place_id } = req.params;
-        const [[lugar]] = await pool.query('SELECT id FROM lugares WHERE place_id = ?', [place_id]);
-        if (!lugar) {
+        const [result] = await pool.query('DELETE FROM lugares WHERE place_id = ?', [place_id]);
+        if (result.affectedRows === 0) {
             return res.status(404).json({ msg: 'El lugar no está registrado en la base de datos' });
         }
-        await pool.query('DELETE FROM lugares WHERE place_id = ?', [place_id]);
-        // Guarda la eliminación en historial
+        // Registrar en historial de acciones
         await pool.query(
-            'INSERT INTO historial_eliminaciones (tipo_entidad, id_entidad, id_usuario) VALUES (?, ?, ?)',
-            ['lugar', place_id, req.user.id]
+            'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
+            ['lugar', place_id, req.user.id, 'eliminar']
         );
         res.json({ msg: 'Lugar eliminado correctamente' });
     } catch (error) {

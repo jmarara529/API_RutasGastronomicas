@@ -19,11 +19,15 @@ const crearResena = async (req, res) => {
         }
 
         // Insertar la reseña en la base de datos
-        await pool.query(
+        const [result] = await pool.query(
             'INSERT INTO resenas (id_usuario, id_lugar, calificacion, comentario) VALUES (?, ?, ?, ?)',
             [id_usuario, existeLugar.id, calificacion, comentario]
         );
-
+        // Registrar en historial de acciones
+        await pool.query(
+            "INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)",
+            ['resena', result.insertId, id_usuario, 'crear']
+        );
         res.json({ msg: 'Reseña creada correctamente' });
     } catch (error) {
         // Manejar errores y responder con mensaje de error
@@ -67,7 +71,11 @@ const editarResena = async (req, res) => {
         // Actualizar la reseña en la base de datos
         const sql = `UPDATE resenas SET ${campos.join(', ')} WHERE id = ?`;
         await pool.query(sql, valores);
-
+        // Registrar en historial de acciones
+        await pool.query(
+            "INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)",
+            ['resena', id, id_usuario, 'editar']
+        );
         res.json({ msg: 'Reseña actualizada correctamente' });
     } catch (error) {
         // Manejar errores y responder con mensaje de error
@@ -89,10 +97,10 @@ const eliminarResena = async (req, res) => {
         // Eliminar la reseña de la base de datos
         await pool.query('DELETE FROM resenas WHERE id = ?', [id]);
 
-        // Guardar la eliminación en el historial de eliminaciones
+        // Guardar la eliminación en el historial de acciones
         await pool.query(
-            'INSERT INTO historial_eliminaciones (tipo_entidad, id_entidad, id_usuario) VALUES (?, ?, ?)',
-            ['resena', id, req.user.id]
+            "INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)",
+            ['resena', id, req.user.id, 'eliminar']
         );
 
         res.json({ msg: 'Reseña eliminada correctamente' });

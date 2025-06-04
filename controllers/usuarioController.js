@@ -80,8 +80,8 @@ const eliminarUsuario = async (req, res) => {
 
     // Registra la eliminación en el historial
     await pool.query(
-      'INSERT INTO historial_eliminaciones (tipo_entidad, id_entidad, id_usuario) VALUES (?, ?, ?)',
-      ['usuario', id, req.user.id]
+      'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
+      ['usuario', id, req.user.id, 'eliminar']
     );
 
     res.json({ msg: 'Usuario eliminado' });

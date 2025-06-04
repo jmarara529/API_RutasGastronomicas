@@ -23,24 +23,12 @@ const agregarFavorito = async (req, res) => {
 
     // Inserta el favorito (ignora si ya existe)
     await pool.query('INSERT IGNORE INTO favoritos (id_usuario, id_lugar) VALUES (?, ?)', [id_usuario, id_lugar]);
-
-    res.json({ msg: 'Favorito agregado' });
-  } catch (error) {
-    // Maneja errores y responde con mensaje de error
-    res.status(500).json({ error: error.message });
-  }
-};
-
-// Lista los lugares favoritos del usuario autenticado
-const listarFavoritos = async (req, res) => {
-  try {
-    const id_usuario = req.user.id;
-    // Consulta los lugares favoritos del usuario, incluyendo la fecha de añadido
-    const [favoritos] = await pool.query(
-      `SELECT l.*, f.fecha_agregado FROM favoritos f JOIN lugares l ON f.id_lugar = l.id WHERE f.id_usuario = ?`,
-      [id_usuario]
+    // Registrar en historial de acciones
+    await pool.query(
+      "INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)",
+      ['favorito', id_lugar, id_usuario, 'añadir']
     );
-    res.json(favoritos);
+    res.json({ msg: 'Favorito agregado' });
   } catch (error) {
     // Maneja errores y responde con mensaje de error
     res.status(500).json({ error: error.message });
@@ -55,6 +43,11 @@ const eliminarFavorito = async (req, res) => {
 
     // Elimina el favorito de la base de datos
     await pool.query('DELETE FROM favoritos WHERE id_usuario = ? AND id_lugar = ?', [id_usuario, id_lugar]);
+    // Registrar en historial de acciones
+    await pool.query(
+      "INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)",
+      ['favorito', id_lugar, id_usuario, 'eliminar']
+    );
     res.json({ msg: 'Favorito eliminado' });
   } catch (error) {
     // Maneja errores y responde con mensaje de error
@@ -62,9 +55,7 @@ const eliminarFavorito = async (req, res) => {
   }
 };
 
-// Exporta las funciones del controlador
 module.exports = {
   agregarFavorito,
-  listarFavoritos,
   eliminarFavorito,
 };

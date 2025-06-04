@@ -53,12 +53,13 @@ CREATE TABLE IF NOT EXISTS visitados (
     FOREIGN KEY (id_lugar) REFERENCES lugares(id) ON DELETE CASCADE
 );
 
--- Historial de eliminaciones
-CREATE TABLE IF NOT EXISTS historial_eliminaciones (
+-- Historial de acciones
+CREATE TABLE IF NOT EXISTS historial_acciones (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    tipo_entidad ENUM('usuario','resena','favorito','visitado') NOT NULL,
-    id_entidad INT NOT NULL,
-    id_usuario INT,
-    fecha_eliminacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id)
+    tipo_entidad VARCHAR(30) NOT NULL,
+    id_entidad VARCHAR(100) NOT NULL,
+    id_usuario INT NOT NULL,
+    accion VARCHAR(30) NOT NULL,
+    fecha_accion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE
 );

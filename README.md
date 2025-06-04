@@ -1,6 +1,6 @@
 # 📍 Rutas Gastronómicas - API REST
 
-API RESTful construida con **Node.js**, **Express** y **MySQL** para gestionar una red social de experiencias gastronómicas. Permite a los usuarios registrar lugares visitados, dejar reseñas, guardar favoritos y a los administradores gestionar usuarios y ver el historial de eliminaciones.  
+API RESTful construida con **Node.js**, **Express** y **MySQL** para gestionar una red social de experiencias gastronómicas. Permite a los usuarios registrar lugares visitados, dejar reseñas, guardar favoritos y a los administradores gestionar usuarios y ver el historial de acciones.  
 **Incluye integración con Google Places API para búsquedas de lugares por texto, coordenadas y detalles.**
 
 ---
@@ -142,7 +142,7 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 - **resenas**: id, id_usuario, id_lugar, calificacion, comentario, fecha
 - **favoritos**: id_usuario, id_lugar, fecha_agregado
 - **visitados**: id_usuario, id_lugar, fecha_visita
-- **historial_eliminaciones**: id, tipo_entidad, id_entidad, id_usuario, fecha_eliminacion
+- **historial_acciones**: id, tipo_entidad, id_entidad, id_usuario, accion, fecha_accion
 
 ---
 
@@ -519,7 +519,7 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 
 ---
 
-### 🕵️ Historial de Eliminaciones (Solo Admin)
+### 🕵️ Historial de Acciones (Solo Admin)
 
 #### GET `/api/historial`
 **Response:**
@@ -530,7 +530,8 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
     "tipo_entidad": "usuario",
     "id_entidad": 2,
     "id_usuario": 1,
-    "fecha_eliminacion": "2024-05-21T13:00:00.000Z",
+    "accion": "eliminado",
+    "fecha_accion": "2024-05-21T13:00:00.000Z",
     "usuario_eliminador": "admin"
   }
 ]
@@ -544,8 +545,8 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 - Los lugares se identifican por `place_id` (Google Places).
 - Puedes buscar lugares por nombre de calle, ciudad o coordenadas (lat/lng) gracias a la integración con Google Places.
 - Antes de guardar una reseña, favorito o visita, se verifica si el lugar existe en la base de datos.
-- Los administradores pueden ver el historial de eliminaciones y gestionar usuarios/lugares.
-- Cada eliminación relevante se registra en la tabla `historial_eliminaciones`.
+- Los administradores pueden ver el historial de acciones y gestionar usuarios/lugares.
+- Cada acción relevante se registra en la tabla `historial_acciones`.
 
 ---
 

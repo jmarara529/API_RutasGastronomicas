@@ -1,6 +1,6 @@
 const pool = require('../db');
 
-// Obtener el historial de eliminaciones (solo admin)
+// Obtener el historial de acciones (solo admin)
 const obtenerHistorial = async (req, res) => {
     try {
         // Verifica si el usuario autenticado es administrador
@@ -8,9 +8,9 @@ const obtenerHistorial = async (req, res) => {
 
         const [historial] = await pool.query(`
             SELECT h.*, u.nombre AS ejecutado_por 
-            FROM historial_eliminaciones h 
+            FROM historial_acciones h 
             LEFT JOIN usuarios u ON h.id_usuario = u.id 
-            ORDER BY h.fecha_eliminacion DESC
+            ORDER BY h.fecha_accion DESC
         `);
         res.json(historial);
     } catch (error) {

@@ -27,6 +27,11 @@ const marcarVisitado = async (req, res) => {
     }
 
     await pool.query('INSERT IGNORE INTO visitados (id_usuario, id_lugar) VALUES (?, ?)', [id_usuario, lugarId]);
+    // Registrar en historial de acciones
+    await pool.query(
+      "INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)",
+      ['visitado', lugarId, id_usuario, 'añadir']
+    );
     res.json({ msg: 'Visita registrada correctamente' });
   } catch (error) {
     res.status(500).json({ msg: 'Error al registrar la visita', error: error.message });
@@ -94,8 +99,8 @@ const eliminarVisitado = async (req, res) => {
 
     // Registrar en historial
     await pool.query(
-      'INSERT INTO historial_eliminaciones (tipo_entidad, id_entidad, id_usuario) VALUES (?, ?, ?)',
-      ['visitado', id_lugar, id_usuario]
+      "INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)",
+      ['visitado', id_lugar, id_usuario, 'eliminar']
     );
 
     res.json({ msg: 'Visita eliminada correctamente' });
