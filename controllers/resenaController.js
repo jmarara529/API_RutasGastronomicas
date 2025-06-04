@@ -160,6 +160,25 @@ const listarResenasUsuario = async (req, res) => {
     }
 };
 
+// Listar reseñas de cualquier usuario (solo admin)
+const listarResenasDeUsuario = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const [resenas] = await pool.query(
+            `SELECT r.*, u.nombre AS nombre_usuario, u.correo AS correo_usuario, l.nombre AS nombre_lugar
+             FROM resenas r
+             JOIN usuarios u ON r.id_usuario = u.id
+             JOIN lugares l ON r.id_lugar = l.id
+             WHERE r.id_usuario = ?
+             ORDER BY r.fecha DESC`,
+            [id]
+        );
+        res.json(resenas);
+    } catch (error) {
+        res.status(500).json({ msg: 'Error al listar las reseñas del usuario', error: error.message });
+    }
+};
+
 // Exportar las funciones del controlador
 module.exports = {
     crearResena,
@@ -167,4 +186,5 @@ module.exports = {
     eliminarResena,
     listarResenas,
     listarResenasUsuario,
+    listarResenasDeUsuario,
 };

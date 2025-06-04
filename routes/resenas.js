@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/auth');
+const isAdmin = require('../middleware/isAdmin');
 const resenaController = require('../controllers/resenaController');
 
 // Ruta para crear una reseña (requiere autenticación)
@@ -17,5 +18,8 @@ router.get('/', authMiddleware, resenaController.listarResenas);
 
 // Ruta para obtener las reseñas del usuario autenticado
 router.get('/usuario', authMiddleware, resenaController.listarResenasUsuario);
+
+// Ruta para listar reseñas de cualquier usuario (solo para admin)
+router.get('/usuario/:id', authMiddleware, isAdmin, resenaController.listarResenasDeUsuario);
 
 module.exports = router;
