@@ -9,25 +9,47 @@ exports.registrar = async (req, res) => {
     // Verifica si el usuario ya existe
     const [[usuarioExistente]] = await db.execute('SELECT id FROM usuarios WHERE correo = ?', [correo]);
     if (usuarioExistente) {
+      // Registrar intento fallido en historial
+      await db.execute(
+        'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
+        ['usuario', correo, null, 'crear_error']
+      );
+      console.log('[HISTORIAL] crear_error registrado para', correo);
       return res.status(409).json({ msg: 'Error al registrar', error: 'El usuario ya existe' });
     }
-
     // Hashea la contraseña antes de guardarla
     const hash = await bcrypt.hash(contraseña, 10);
-
     // Inserta el nuevo usuario en la base de datos
-    await db.execute(
+    const [result] = await db.execute(
       'INSERT INTO usuarios (nombre, correo, contraseña) VALUES (?, ?, ?)',
       [nombre, correo, hash]
     );
+    // Obtener el id insertado correctamente
+    const [[{ id }]] = await db.execute('SELECT id FROM usuarios WHERE correo = ?', [correo]);
+    // Añadir registro al historial
+    await db.execute(
+      'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
+      ['usuario', id, id, 'crear_exitoso']
+    );
+    console.log('[HISTORIAL] crear_exitoso registrado para id', id);
     // Responde con éxito
     res.status(201).json({ msg: 'Usuario creado' });
   } catch (e) {
     // Errores de validación de campos
     if (!nombre || !correo || !contraseña) {
+      await db.execute(
+        'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
+        ['usuario', correo, null, 'crear_error']
+      );
+      console.log('[HISTORIAL] crear_error registrado para', correo);
       return res.status(400).json({ msg: 'Error al registrar', error: 'Faltan campos obligatorios' });
     }
     // Otros errores internos
+    await db.execute(
+      'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
+      ['usuario', correo, null, 'crear_error']
+    );
+    console.log('[HISTORIAL] crear_error registrado para', correo, 'error:', e.message);
     res.status(500).json({ msg: 'Error interno al registrar', error: e.message });
   }
 };
