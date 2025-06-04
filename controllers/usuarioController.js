@@ -132,6 +132,37 @@ const obtenerUsuarioPorId = async (req, res) => {
   }
 };
 
+// Editar todos los datos de un usuario (solo admin)
+const editarUsuarioAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre, correo, password, es_admin } = req.body;
+    if (parseInt(id) === 1) return res.status(403).json({ msg: 'No se puede modificar el usuario 1' });
+    // Solo admin puede usar este endpoint
+    if (!req.user.es_admin) return res.status(403).json({ msg: 'No autorizado' });
+    // Construir query dinámico
+    const campos = [];
+    const valores = [];
+    if (nombre) { campos.push('nombre = ?'); valores.push(nombre); }
+    if (correo) { campos.push('correo = ?'); valores.push(correo); }
+    if (typeof es_admin !== 'undefined') { campos.push('es_admin = ?'); valores.push(!!es_admin); }
+    if (password) {
+      const hash = await bcrypt.hash(password, 10);
+      campos.push('contraseña = ?');
+      valores.push(hash);
+    }
+    if (campos.length === 0) return res.status(400).json({ msg: 'No hay datos para actualizar' });
+    valores.push(id);
+    await pool.query(`UPDATE usuarios SET ${campos.join(', ')} WHERE id = ?`, valores);
+    res.json({ msg: 'Usuario actualizado' });
+  } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ msg: 'Correo ya registrado' });
+    }
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   editarNombre,
   editarCorreo,
@@ -140,4 +171,5 @@ module.exports = {
   listarUsuarios,
   obtenerUsuarioAutenticado,
   obtenerUsuarioPorId,
+  editarUsuarioAdmin,
 };
