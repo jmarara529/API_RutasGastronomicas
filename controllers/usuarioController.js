@@ -7,17 +7,25 @@ const crearUsuario = async (req, res) => {
     const { nombre, correo, contraseña } = req.body;
     if (!nombre || !correo || !contraseña) return res.status(400).json({ msg: 'Faltan datos obligatorios' });
     const hash = await bcrypt.hash(contraseña, 10);
-    const [result] = await pool.query('INSERT INTO usuarios (nombre, correo, contraseña) VALUES (?, ?, ?)', [nombre, correo, hash]);
-    // Registrar en historial de acciones
-    await pool.query(
-      'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
-      ['usuario', result.insertId, result.insertId, 'crear']
-    );
-    res.status(201).json({ msg: 'Usuario creado', id: result.insertId });
-  } catch (error) {
-    if (error.code === 'ER_DUP_ENTRY') {
-      return res.status(400).json({ msg: 'Correo ya registrado' });
+    try {
+      const [result] = await pool.query('INSERT INTO usuarios (nombre, correo, contraseña) VALUES (?, ?, ?)', [nombre, correo, hash]);
+      await pool.query(
+        'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
+        ['usuario', result.insertId, result.insertId, 'crear_exitoso']
+      );
+      res.status(201).json({ msg: 'Usuario creado', id: result.insertId });
+    } catch (error) {
+      // Si el usuario no se pudo crear, intenta registrar el error en historial (sin id_usuario válido)
+      await pool.query(
+        'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
+        ['usuario', correo, null, 'crear_error']
+      );
+      if (error.code === 'ER_DUP_ENTRY') {
+        return res.status(400).json({ msg: 'Correo ya registrado' });
+      }
+      throw error;
     }
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
@@ -90,18 +98,23 @@ const editarContraseña = async (req, res) => {
 const eliminarUsuario = async (req, res) => {
   try {
     const { id } = req.params;
-    // No se permite eliminar el usuario con id 1
     if (parseInt(id) === 1) return res.status(403).json({ msg: 'No se puede eliminar el usuario 1' });
-    // Solo el propio usuario o un admin pueden eliminar
     if (req.user.id !== parseInt(id) && !req.user.es_admin) return res.status(403).json({ msg: 'No autorizado' });
-    // Registrar en historial antes de eliminar el usuario
-    await pool.query(
-      'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
-      ['usuario', id, req.user.id, 'eliminar']
-    );
-    // Elimina el usuario de la base de datos
-    await pool.query('DELETE FROM usuarios WHERE id = ?', [id]);
-    res.json({ msg: 'Usuario eliminado' });
+    // Intentar eliminar usuario
+    try {
+      await pool.query('DELETE FROM usuarios WHERE id = ?', [id]);
+      await pool.query(
+        'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
+        ['usuario', id, req.user.id, 'eliminar_exitoso']
+      );
+      res.json({ msg: 'Usuario eliminado' });
+    } catch (error) {
+      await pool.query(
+        'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
+        ['usuario', id, req.user.id, 'eliminar_error']
+      );
+      throw error;
+    }
   } catch (error) {
     console.error('[ERROR][eliminarUsuario]', error);
     res.status(500).json({ error: error.message });

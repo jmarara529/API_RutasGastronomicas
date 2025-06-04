@@ -58,8 +58,8 @@ CREATE TABLE IF NOT EXISTS historial_acciones (
     id INT AUTO_INCREMENT PRIMARY KEY,
     tipo_entidad VARCHAR(30) NOT NULL,
     id_entidad VARCHAR(100) NOT NULL,
-    id_usuario INT NOT NULL,
+    id_usuario INT NULL,
     accion VARCHAR(30) NOT NULL,
     fecha_accion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id)
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE SET NULL
 );
