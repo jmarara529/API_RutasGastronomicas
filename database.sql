@@ -61,5 +61,5 @@ CREATE TABLE IF NOT EXISTS historial_acciones (
     id_usuario INT NOT NULL,
     accion VARCHAR(30) NOT NULL,
     fecha_accion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id)
 );

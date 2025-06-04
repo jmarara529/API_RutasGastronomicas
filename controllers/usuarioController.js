@@ -94,13 +94,13 @@ const eliminarUsuario = async (req, res) => {
     if (parseInt(id) === 1) return res.status(403).json({ msg: 'No se puede eliminar el usuario 1' });
     // Solo el propio usuario o un admin pueden eliminar
     if (req.user.id !== parseInt(id) && !req.user.es_admin) return res.status(403).json({ msg: 'No autorizado' });
-    // Elimina el usuario de la base de datos
-    await pool.query('DELETE FROM usuarios WHERE id = ?', [id]);
-    // Registrar en historial (si el usuario ya no existe, usar req.user.id como ejecutor)
+    // Registrar en historial antes de eliminar el usuario
     await pool.query(
       'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
       ['usuario', id, req.user.id, 'eliminar']
     );
+    // Elimina el usuario de la base de datos
+    await pool.query('DELETE FROM usuarios WHERE id = ?', [id]);
     res.json({ msg: 'Usuario eliminado' });
   } catch (error) {
     console.error('[ERROR][eliminarUsuario]', error);
