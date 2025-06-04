@@ -35,9 +35,9 @@ const agregarFavorito = async (req, res) => {
 const listarFavoritos = async (req, res) => {
   try {
     const id_usuario = req.user.id;
-    // Consulta los lugares favoritos del usuario
+    // Consulta los lugares favoritos del usuario, incluyendo la fecha de añadido
     const [favoritos] = await pool.query(
-      `SELECT l.* FROM favoritos f JOIN lugares l ON f.id_lugar = l.id WHERE f.id_usuario = ?`,
+      `SELECT l.*, f.fecha_agregado FROM favoritos f JOIN lugares l ON f.id_lugar = l.id WHERE f.id_usuario = ?`,
       [id_usuario]
     );
     res.json(favoritos);
