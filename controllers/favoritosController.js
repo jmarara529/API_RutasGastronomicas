@@ -55,10 +55,14 @@ const eliminarFavorito = async (req, res) => {
   }
 };
 
-// Lista los lugares favoritos del usuario autenticado
+// Lista los lugares favoritos del usuario autenticado o de otro usuario si es admin
 const listarFavoritos = async (req, res) => {
   try {
-    const id_usuario = req.user.id;
+    let id_usuario = req.user.id;
+    // Permitir a admin consultar favoritos de cualquier usuario
+    if (req.user.es_admin && req.query.admin_id) {
+      id_usuario = req.query.admin_id;
+    }
     const [favoritos] = await pool.query(
       `SELECT l.* FROM favoritos f
        JOIN lugares l ON f.id_lugar = l.id
