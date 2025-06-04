@@ -118,6 +118,20 @@ const obtenerUsuarioAutenticado = async (req, res) => {
   }
 };
 
+// Obtener usuario por id (solo admin)
+const obtenerUsuarioPorId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    // No se permite mostrar el usuario con id 1
+    if (parseInt(id) === 1) return res.status(403).json({ msg: 'No se puede mostrar el usuario 1' });
+    const [usuarios] = await pool.query('SELECT id, nombre, correo, fecha_creacion, es_admin FROM usuarios WHERE id = ?', [id]);
+    if (!usuarios.length) return res.status(404).json({ msg: 'Usuario no encontrado' });
+    res.json(usuarios[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   editarNombre,
   editarCorreo,
@@ -125,4 +139,5 @@ module.exports = {
   eliminarUsuario,
   listarUsuarios,
   obtenerUsuarioAutenticado,
+  obtenerUsuarioPorId,
 };

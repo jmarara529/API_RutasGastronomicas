@@ -10,6 +10,9 @@ router.get('/me', authMiddleware, usuarioController.obtenerUsuarioAutenticado);
 // Obtener todos los usuarios (solo admin)
 router.get('/', authMiddleware, isAdmin, usuarioController.listarUsuarios);
 
+// Obtener datos de un usuario específico (solo admin)
+router.get('/:id', authMiddleware, isAdmin, usuarioController.obtenerUsuarioPorId);
+
 // Editar nombre de usuario
 router.put('/nombre/:id', authMiddleware, usuarioController.editarNombre);
 
