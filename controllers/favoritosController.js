@@ -64,7 +64,8 @@ const listarFavoritos = async (req, res) => {
       id_usuario = req.query.admin_id;
     }
     const [favoritos] = await pool.query(
-      `SELECT l.* FROM favoritos f
+      `SELECT l.*, f.fecha_agregado
+       FROM favoritos f
        JOIN lugares l ON f.id_lugar = l.id
        WHERE f.id_usuario = ?`,
       [id_usuario]
