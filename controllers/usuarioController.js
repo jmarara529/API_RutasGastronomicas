@@ -9,6 +9,10 @@ const crearUsuario = async (req, res) => {
     const hash = await bcrypt.hash(contraseña, 10);
     try {
       const [result] = await pool.query('INSERT INTO usuarios (nombre, correo, contraseña) VALUES (?, ?, ?)', [nombre, correo, hash]);
+      // Si es el primer usuario (id=1), hacerlo admin
+      if (result.insertId === 1) {
+        await pool.query('UPDATE usuarios SET es_admin = 1 WHERE id = 1');
+      }
       await pool.query(
         'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
         ['usuario', result.insertId, result.insertId, 'crear_exitoso']
