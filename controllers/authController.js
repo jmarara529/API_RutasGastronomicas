@@ -26,6 +26,10 @@ exports.registrar = async (req, res) => {
     );
     // Obtener el id del usuario recién creado
     const [[{ id }]] = await db.execute('SELECT id FROM usuarios WHERE correo = ?', [correo]);
+    // Si es el primer usuario, hacerlo admin
+    if (id === 1) {
+      await db.execute('UPDATE usuarios SET es_admin = 1 WHERE id = 1');
+    }
     // Auditar registro exitoso
     await db.execute(
       'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
