@@ -10,7 +10,7 @@ API RESTful construida con **Node.js**, **Express** y **MySQL** para gestionar u
 ```
 .
 ├── controllers/          # Lógica de negocio (usuarios, reseñas, lugares, places, etc.)
-├── middleware/           # Middlewares personalizados
+├── middleware/           # Middlewares personalizados (auth, isAdmin)
 ├── routes/               # Rutas organizadas por entidad
 ├── database.sql          # Script para crear la base de datos y tablas
 ├── db.js                 # Conexión a MySQL
@@ -148,9 +148,10 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 
 ## 🔐 Autenticación & Autorización
 
-- Autenticación por **JWT** (Bearer Token)
-- Rol administrador: `es_admin = true`
-- El usuario con `id = 1` no puede ser modificado ni eliminado
+- Autenticación por **JWT** (Bearer Token) usando el middleware `auth`.
+- Rol administrador: `es_admin = true` (middleware `isAdmin`).
+- El usuario con `id = 1` no puede ser modificado ni eliminado.
+- **El primer usuario registrado (id=1) será automáticamente administrador**.
 
 ---
 
@@ -159,6 +160,8 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 ### 🔑 Auth
 
 #### POST `/api/auth/register`
+Registra un nuevo usuario. El primer usuario será admin.
+
 **Request:**
 ```json
 {
@@ -173,6 +176,8 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 ```
 
 #### POST `/api/auth/login`
+Inicia sesión y devuelve un token JWT.
+
 **Request:**
 ```json
 {
@@ -182,73 +187,34 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 ```
 **Response:**
 ```json
-{ "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6..." }
-```
-
----
-
-### 🌍 Google Places
-
-#### GET `/api/places/buscar?query=Gran+Vía+Madrid`
-**Descripción:** Busca lugares por texto (nombre de calle, ciudad, etc.).
-**Response:**
-```json
-{
-  "results": [
-    {
-      "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
-      "name": "Restaurante Ejemplo",
-      "formatted_address": "Calle Falsa 123, Ciudad de México",
-      ...
-    }
-  ],
-  "status": "OK"
-}
-```
-
-#### GET `/api/places/cercanos?lat=40.4168&lng=-3.7038&radius=1000&type=restaurant`
-**Descripción:** Busca lugares cercanos a unas coordenadas (latitud, longitud).  
-- `radius` es opcional (metros, por defecto 500)
-- `type` es opcional (ejemplo: restaurant, bar, etc.)
-
-**Response:**
-```json
-{
-  "results": [
-    {
-      "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
-      "name": "Restaurante Cercano",
-      "vicinity": "Calle Ejemplo, Madrid",
-      ...
-    }
-  ],
-  "status": "OK"
-}
-```
-
-#### GET `/api/places/detalles?place_id=ChIJN1t_tDeuEmsRUsoyG83frY4`
-**Descripción:** Obtiene los detalles de un lugar por su `place_id`.
-
-**Response:**
-```json
-{
-  "result": {
-    "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
-    "name": "Restaurante Ejemplo",
-    "formatted_address": "Calle Falsa 123, Ciudad de México",
-    "geometry": { ... },
-    ...
-  },
-  "status": "OK"
-}
+{ "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6...", "es_admin": true, "id": 1 }
 ```
 
 ---
 
 ### 👤 Usuarios
 
+#### GET `/api/usuarios/me`
+Obtiene los datos del usuario autenticado.
+
+**Headers:**
+`Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "id": 1,
+  "nombre": "Juan",
+  "correo": "juan@email.com",
+  "fecha_creacion": "2024-05-21T10:00:00.000Z",
+  "es_admin": true
+}
+```
+
 #### GET `/api/usuarios` (Solo admin)
-**Headers:**  
+Lista todos los usuarios.
+
+**Headers:**
 `Authorization: Bearer <token>`
 
 **Response:**
@@ -264,7 +230,26 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 ]
 ```
 
+#### GET `/api/usuarios/:id` (Solo admin)
+Obtiene los datos de un usuario específico.
+
+**Headers:**
+`Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "id": 2,
+  "nombre": "Juan",
+  "correo": "juan@email.com",
+  "fecha_creacion": "2024-05-21T10:00:00.000Z",
+  "es_admin": false
+}
+```
+
 #### PUT `/api/usuarios/nombre/:id`
+Actualiza el nombre del usuario autenticado o por admin.
+
 **Request:**
 ```json
 { "nombre": "Nuevo Nombre" }
@@ -275,6 +260,8 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 ```
 
 #### PUT `/api/usuarios/correo/:id`
+Actualiza el correo del usuario autenticado o por admin.
+
 **Request:**
 ```json
 { "correo": "nuevo@email.com" }
@@ -284,17 +271,33 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 { "msg": "Correo actualizado" }
 ```
 
-#### PUT `/api/usuarios/contraseña/:id`
+#### PUT `/api/usuarios/contrasena/:id`
+Actualiza la contraseña del usuario autenticado o por admin.
+
 **Request:**
 ```json
-{ "contraseña": "nuevaPassword" }
+{ "contrasena": "nuevaPassword" }
 ```
 **Response:**
 ```json
 { "msg": "Contraseña actualizada" }
 ```
 
+#### PUT `/api/usuarios/:id` (Solo admin)
+Actualiza todos los datos de un usuario (nombre, correo, contraseña, es_admin).
+
+**Request:**
+```json
+{ "nombre": "Nuevo", "correo": "nuevo@email.com", "es_admin": true }
+```
+**Response:**
+```json
+{ "msg": "Usuario actualizado" }
+```
+
 #### DELETE `/api/usuarios/:id`
+Elimina un usuario (no se puede eliminar el usuario id=1).
+
 **Response:**
 ```json
 { "msg": "Usuario eliminado" }
@@ -305,6 +308,8 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 ### 📝 Reseñas
 
 #### POST `/api/resenas`
+Crea una reseña de un lugar registrado.
+
 **Request:**
 ```json
 {
@@ -318,7 +323,29 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 { "msg": "Reseña creada correctamente" }
 ```
 
+#### PUT `/api/resenas/:id`
+Edita una reseña (solo autor o admin).
+
+**Request:**
+```json
+{ "calificacion": 4, "comentario": "Muy bueno" }
+```
+**Response:**
+```json
+{ "msg": "Reseña actualizada correctamente" }
+```
+
+#### DELETE `/api/resenas/:id`
+Elimina una reseña (solo autor o admin).
+
+**Response:**
+```json
+{ "msg": "Reseña eliminada correctamente" }
+```
+
 #### GET `/api/resenas`
+Lista todas las reseñas (autenticado, con filtros por lugar, usuario, etc.).
+
 **Response:**
 ```json
 [
@@ -335,20 +362,38 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 ]
 ```
 
-#### PUT `/api/resenas/:id`
-**Request:**
-```json
-{ "calificacion": 4, "comentario": "Muy bueno" }
-```
+#### GET `/api/resenas/usuario`
+Lista las reseñas del usuario autenticado.
+
 **Response:**
 ```json
-{ "msg": "Reseña actualizada correctamente" }
+[
+  {
+    "id": 1,
+    "id_usuario": 2,
+    "id_lugar": 1,
+    "calificacion": 5,
+    "comentario": "¡Excelente lugar!",
+    "fecha": "2024-05-21T12:00:00.000Z"
+  }
+]
 ```
 
-#### DELETE `/api/resenas/:id`
+#### GET `/api/resenas/usuario/:id` (Solo admin)
+Lista las reseñas de cualquier usuario.
+
 **Response:**
 ```json
-{ "msg": "Reseña eliminada correctamente" }
+[
+  {
+    "id": 1,
+    "id_usuario": 2,
+    "id_lugar": 1,
+    "calificacion": 5,
+    "comentario": "¡Excelente lugar!",
+    "fecha": "2024-05-21T12:00:00.000Z"
+  }
+]
 ```
 
 ---
@@ -356,6 +401,8 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 ### 📍 Lugares
 
 #### GET `/api/lugares`
+Lista todos los lugares registrados.
+
 **Response:**
 ```json
 [
@@ -371,6 +418,8 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 ```
 
 #### GET `/api/lugares/:place_id`
+Obtiene información de un lugar por su place_id.
+
 **Response:**
 ```json
 {
@@ -382,12 +431,25 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
   "ciudad": "Ciudad de México"
 }
 ```
-**Error:**
+
+#### GET `/api/lugares/byid/:id`
+Obtiene información de un lugar por su id interno.
+
+**Response:**
 ```json
-{ "msg": "El lugar no está registrado en la base de datos" }
+{
+  "id": 1,
+  "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+  "nombre": "Restaurante Ejemplo",
+  "direccion": "Calle Falsa 123",
+  "categoria": "Mexicana",
+  "ciudad": "Ciudad de México"
+}
 ```
 
 #### POST `/api/lugares`
+Crea un nuevo lugar (si no existe). Solo autenticado.
+
 **Request:**
 ```json
 {
@@ -402,12 +464,10 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 ```json
 { "msg": "Lugar registrado correctamente" }
 ```
-**Error:**
-```json
-{ "msg": "El lugar ya está registrado" }
-```
 
 #### PUT `/api/lugares/:place_id`
+Actualiza un lugar (solo admin).
+
 **Request:**
 ```json
 { "nombre": "Nuevo Nombre" }
@@ -418,6 +478,8 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 ```
 
 #### DELETE `/api/lugares/:place_id`
+Elimina un lugar (solo admin).
+
 **Response:**
 ```json
 { "msg": "Lugar eliminado correctamente" }
@@ -428,6 +490,8 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 ### ❤️ Favoritos
 
 #### POST `/api/favoritos`
+Agrega un lugar a favoritos. Si el lugar no existe, se crea automáticamente.
+
 **Request:**
 ```json
 {
@@ -444,21 +508,25 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 ```
 
 #### GET `/api/favoritos`
+Lista los favoritos del usuario autenticado. Si eres admin, puedes consultar los favoritos de otro usuario con `?admin_id=2`.
+
 **Response:**
 ```json
 [
   {
-    "id": 1,
     "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
     "nombre": "Restaurante Ejemplo",
     "direccion": "Calle Falsa 123",
     "categoria": "Mexicana",
-    "ciudad": "Ciudad de México"
+    "ciudad": "Ciudad de México",
+    "fecha_agregado": "2024-05-21T12:00:00.000Z"
   }
 ]
 ```
 
 #### DELETE `/api/favoritos/:id_lugar`
+Elimina un favorito.
+
 **Response:**
 ```json
 { "msg": "Favorito eliminado" }
@@ -469,6 +537,8 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 ### 📍 Visitados
 
 #### POST `/api/visitados`
+Marca un lugar como visitado. Si el lugar no existe, se crea automáticamente.
+
 **Request:**
 ```json
 {
@@ -485,6 +555,8 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 ```
 
 #### GET `/api/visitados`
+Lista los lugares visitados por el usuario autenticado.
+
 **Response:**
 ```json
 [
@@ -498,6 +570,8 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 ```
 
 #### GET `/api/visitados/admin`
+(Solo admin) Lista todas las visitas, con filtros opcionales `?id_usuario=2&id_lugar=1`.
+
 **Response:**
 ```json
 [
@@ -512,6 +586,8 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 ```
 
 #### DELETE `/api/visitados/:id_lugar`
+Elimina un lugar de la lista de visitados.
+
 **Response:**
 ```json
 { "msg": "Visita eliminada correctamente" }
@@ -522,6 +598,8 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 ### 🕵️ Historial de Acciones (Solo Admin)
 
 #### GET `/api/historial`
+Devuelve el historial de acciones relevantes (creación, edición, eliminación de usuarios, lugares, reseñas, favoritos, visitados).
+
 **Response:**
 ```json
 [
@@ -532,9 +610,76 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
     "id_usuario": 1,
     "accion": "eliminado",
     "fecha_accion": "2024-05-21T13:00:00.000Z",
-    "usuario_eliminador": "admin"
+    "ejecutado_por": "admin"
   }
 ]
+```
+
+---
+
+### 🌍 Google Places
+
+#### GET `/api/places/buscar?query=Gran+Vía+Madrid`
+Busca lugares por texto (nombre de calle, ciudad, etc.). Si no hay resultados útiles, intenta geocodificar y buscar lugares cercanos.
+
+**Response:**
+```json
+{
+  "results": [
+    {
+      "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+      "displayName": { "text": "Restaurante Ejemplo" },
+      "formattedAddress": "Calle Falsa 123, Ciudad de México"
+    }
+  ],
+  "status": "OK"
+}
+```
+
+#### GET `/api/places/cercanos?lat=40.4168&lng=-3.7038&radius=1000&type=restaurant`
+Busca lugares cercanos a unas coordenadas.
+
+**Response:**
+```json
+{
+  "results": [
+    {
+      "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+      "displayName": { "text": "Restaurante Cercano" },
+      "vicinity": "Calle Ejemplo, Madrid"
+    }
+  ],
+  "status": "OK"
+}
+```
+
+#### GET `/api/places/detalles?place_id=ChIJN1t_tDeuEmsRUsoyG83frY4`
+Obtiene los detalles de un lugar por su `place_id`.
+
+**Response:**
+```json
+{
+  "result": {
+    "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+    "displayName": { "text": "Restaurante Ejemplo" },
+    "formattedAddress": "Calle Falsa 123, Ciudad de México",
+    "geometry": { }
+  },
+  "status": "OK"
+}
+```
+
+#### GET `/api/places/photo?name=places/ChIJN1t_tDeuEmsRUsoyG83frY4/photos/ATtYBw...`
+Devuelve la imagen de un lugar de Google Places (proxy). Devuelve la imagen directamente.
+
+#### GET `/api/maps/embed?lat=40.4168&lng=-3.7038&q=Restaurante+Ejemplo`
+Devuelve la URL de un iframe de Google Maps Embed API para mostrar un lugar en un mapa.
+
+**Response:**
+```json
+{
+  "url": "https://www.google.com/maps/embed/v1/place?key=...&q=Restaurante+Ejemplo&center=40.4168,-3.7038&zoom=16"
+}
 ```
 
 ---
@@ -542,19 +687,22 @@ GOOGLE_PLACES_API_KEY=tu_clave_google_places
 ## ⚙️ Funcionamiento
 
 - Los usuarios pueden registrarse, iniciar sesión y gestionar sus datos.
+- El primer usuario registrado será automáticamente administrador.
 - Los lugares se identifican por `place_id` (Google Places).
 - Puedes buscar lugares por nombre de calle, ciudad o coordenadas (lat/lng) gracias a la integración con Google Places.
-- Antes de guardar una reseña, favorito o visita, se verifica si el lugar existe en la base de datos.
+- Antes de guardar una reseña, favorito o visita, se verifica si el lugar existe en la base de datos; si no, se crea automáticamente en favoritos/visitados.
 - Los administradores pueden ver el historial de acciones y gestionar usuarios/lugares.
 - Cada acción relevante se registra en la tabla `historial_acciones`.
+- Los endpoints protegidos usan el middleware de autenticación y/o admin.
+- Los endpoints de favoritos y visitados son robustos ante duplicados.
 
 ---
 
 ## 📝 Notas
 
-- Todos los endpoints (excepto registro/login) requieren autenticación JWT.
+- Todos los endpoints (excepto registro/login y algunos de Google Places) requieren autenticación JWT.
 - Los endpoints de administración requieren el campo `es_admin` en el token.
 - El usuario con ID 1 es protegido y no puede ser modificado/eliminado.
 - Para usar la integración de Google Places, necesitas una clave válida en tu `.env` (`GOOGLE_PLACES_API_KEY`).
-
----
+- El endpoint `/api/places/photo` sirve imágenes de Google Places como proxy.
+- El endpoint `/api/maps/embed` genera URLs para iframes de Google Maps.

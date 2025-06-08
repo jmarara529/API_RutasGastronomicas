@@ -105,19 +105,34 @@ const eliminarUsuario = async (req, res) => {
     if (parseInt(id) === 1) return res.status(403).json({ msg: 'No se puede eliminar el usuario 1' });
     if (req.user.id !== parseInt(id) && !req.user.es_admin) return res.status(403).json({ msg: 'No autorizado' });
     // Intentar eliminar usuario
+    let eliminado = false;
     try {
       await pool.query('DELETE FROM usuarios WHERE id = ?', [id]);
-      await pool.query(
-        'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
-        ['usuario', id, req.user.id, 'eliminar_exitoso']
-      );
-      res.json({ msg: 'Usuario eliminado' });
+      eliminado = true;
     } catch (error) {
-      await pool.query(
-        'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
-        ['usuario', id, req.user.id, 'eliminar_error']
-      );
+      // Si falla el borrado, registrar en historial y devolver error
+      try {
+        await pool.query(
+          'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
+          ['usuario', id, req.user.id, 'eliminar_error']
+        );
+      } catch (histError) {
+        console.error('[ERROR][historial][eliminarUsuario]', histError);
+      }
       throw error;
+    }
+    // Si se eliminó, intentar registrar en historial, pero no fallar si da error
+    if (eliminado) {
+      try {
+        await pool.query(
+          'INSERT INTO historial_acciones (tipo_entidad, id_entidad, id_usuario, accion) VALUES (?, ?, ?, ?)',
+          ['usuario', id, req.user.id, 'eliminar_exitoso']
+        );
+      } catch (histError) {
+        console.error('[ERROR][historial][eliminarUsuario]', histError);
+        // No lanzar error, solo loguear
+      }
+      return res.json({ msg: 'Usuario eliminado' });
     }
   } catch (error) {
     console.error('[ERROR][eliminarUsuario]', error);
